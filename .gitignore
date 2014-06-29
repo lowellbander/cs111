@@ -1,0 +1,5 @@
+#general
+*.o
+
+#lab 1
+timetrash
