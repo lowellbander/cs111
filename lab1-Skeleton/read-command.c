@@ -23,6 +23,9 @@ make_command_stream (int (*get_next_byte) (void *),
      add auxiliary functions and otherwise modify the source code.
      You can also use external functions defined in the GNU C Library.  */
   error (1, 0, "command reading not yet implemented");
+  
+  //TODO: mutate command_stream so that calling it repeatedly changes the 'index'
+  
   return 0;
 }
 
