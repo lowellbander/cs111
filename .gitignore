@@ -1,6 +1,7 @@
 #general
 *.o
 *.swp
+*.swo
 
 #lab 1
 timetrash
