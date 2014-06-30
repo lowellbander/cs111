@@ -72,6 +72,8 @@ char* buildString(int (*get_next_byte) (void *),
   return string;
 }
 
+/* Gets the pointer to relevant operator */
+
 char* get_opt_ptr(char* beg, char* end)
 {
   char* ptr = end;
@@ -79,39 +81,51 @@ char* get_opt_ptr(char* beg, char* end)
   {
     if (*ptr == ')')
       return ptr;
+    --ptr;
   }
   ptr = end;
   while(ptr != beg)
-  {
+  { 
     if (*ptr == '|')
     {
       //Check if OR
       if(*(ptr-1) != '|')
         return ptr;
-      ptr++;
+      ptr--;
     }
+    --ptr;
   }
   ptr = end;
   while(ptr != beg)
   {
     if (*ptr == '&')
       return ptr;
+    --ptr;
   }
   ptr = end;
   while(ptr != beg)
   {
-    if (*ptr == ')')
+    if (*ptr == '|')
       return ptr;
   }
   return NULL;
 }
 
-/*command_t
+command_t
 make_command (char* beg, char* end)
 {
-  command_t command(;
-  return command;
-}*/
+  char* optPtr = get_opt_ptr(beg, end);
+  enum command_type typetest = PIPE_COMMAND;
+  struct command = {.type = typetest};
+  
+  if (*optPtr == ')')
+  //insert making command
+  else if (*optPtr == '|')
+  {
+    if(*(--optPtr) != '|')
+  }
+  return NULL;
+}
 
 command_stream_t
 make_command_stream (int (*get_next_byte) (void *),
@@ -131,6 +145,7 @@ make_command_stream (int (*get_next_byte) (void *),
   }
   --size;
   char* end = string + size -1;
+  make_command(string, end);
 
   //error (1, 0, "command reading not yet implemented");
 
