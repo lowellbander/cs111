@@ -36,6 +36,8 @@ bool isValid(char c) {
 };
 */
 
+/* Used for reallocating space for char string */
+
 char* stretch(char* old, int newsize, int oldsize) 
 {
   char* new = calloc(newsize, sizeof(char));
@@ -46,6 +48,8 @@ char* stretch(char* old, int newsize, int oldsize)
   }
   return new;
 }
+
+/* Builds a string from file stream */
 
 char* buildString(int (*get_next_byte) (void *),
 		     void *get_next_byte_argument)
@@ -68,6 +72,46 @@ char* buildString(int (*get_next_byte) (void *),
   return string;
 }
 
+char* get_opt_ptr(char* beg, char* end)
+{
+  char* ptr = end;
+  while(ptr != beg)
+  {
+    if (*ptr == ')')
+      return ptr;
+  }
+  ptr = end;
+  while(ptr != beg)
+  {
+    if (*ptr == '|')
+    {
+      //Check if OR
+      if(*(ptr-1) != '|')
+        return ptr;
+      ptr++;
+    }
+  }
+  ptr = end;
+  while(ptr != beg)
+  {
+    if (*ptr == '&')
+      return ptr;
+  }
+  ptr = end;
+  while(ptr != beg)
+  {
+    if (*ptr == ')')
+      return ptr;
+  }
+  return NULL;
+}
+
+/*command_t
+make_command (char* beg, char* end)
+{
+  command_t command(;
+  return command;
+}*/
 
 command_stream_t
 make_command_stream (int (*get_next_byte) (void *),
@@ -80,7 +124,15 @@ make_command_stream (int (*get_next_byte) (void *),
   char* string = buildString(get_next_byte, get_next_byte_argument);
   puts(string);
 
-  error (1, 0, "command reading not yet implemented");
+  int size = 0;
+  while (string[size] != 0)
+  {
+    ++size;
+  }
+  --size;
+  char* end = string + size -1;
+
+  //error (1, 0, "command reading not yet implemented");
 
   //TODO: mutate command_stream so that calling it repeatedly changes the 'index'
   
