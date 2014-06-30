@@ -13,7 +13,11 @@
 /* FIXME: Define the type 'struct command_stream' here.  This should
    complete the incomplete type declaration in command.h.  */
 
-struct command_stream { command_t head; };
+struct command_stream 
+{ 
+  command_t head; 
+  command_t curr;
+};
 
 /*
 bool isValid(char c) {
@@ -115,16 +119,32 @@ command_t
 make_command (char* beg, char* end)
 {
   char* optPtr = get_opt_ptr(beg, end);
-  enum command_type typetest = PIPE_COMMAND;
-  struct command = {.type = typetest};
+  //enum command_type typetest = PIPE_COMMAND;
+  //struct command commie = {.type = typetest};
   
-  if (*optPtr == ')')
-  //insert making command
+  //Check command type
+  /*if (*optPtr == ')')
+  {
+    
+  }
   else if (*optPtr == '|')
   {
-    if(*(--optPtr) != '|')
+    //If pipe
+    if (*(--optPtr) != '|')
+)   //insert making pipe command
+    else
+    //insert making OR command
   }
-  return NULL;
+  else if (*optPtr == '&')
+  //insert making AND command
+  else
+  //insert making simple command*/
+  
+  command_t returnCommand = malloc(sizeof(struct command));
+  returnCommand->type = SIMPLE_COMMAND;
+  char* foo = "asdg";
+  returnCommand->u.word = &foo;
+  return returnCommand;
 }
 
 command_stream_t
@@ -145,19 +165,25 @@ make_command_stream (int (*get_next_byte) (void *),
   }
   --size;
   char* end = string + size -1;
-  make_command(string, end);
-
-  //error (1, 0, "command reading not yet implemented");
-
-  //TODO: mutate command_stream so that calling it repeatedly changes the 'index'
+  command_t com = make_command(string, end);
+  command_stream_t stream = malloc(sizeof(struct command_stream));
+  stream->head = com;
+  stream->curr = com;
   
-  return 0;
+  return stream;
 }
 
 command_t
 read_command_stream (command_stream_t s)
 {
   /* FIXME: Replace this with your implementation too.  */
+  if (s->curr == NULL) return 0;
+  command_t temp = s->curr;
+  s->curr = NULL;
+  printf("asd: <%s>", *(temp->u.word));
+  return temp;
+
+  
   error (1, 0, "command reading not yet implemented");
   return 0;
 }
