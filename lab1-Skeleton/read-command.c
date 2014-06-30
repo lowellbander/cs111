@@ -10,6 +10,10 @@
 
 /* FIXME: Define the type 'struct command_stream' here.  This should
    complete the incomplete type declaration in command.h.  */
+struct command_stream
+{
+  int my_int;    
+};
 
 command_stream_t
 make_command_stream (int (*get_next_byte) (void *),
