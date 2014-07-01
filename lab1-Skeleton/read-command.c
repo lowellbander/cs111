@@ -141,7 +141,6 @@ make_command (char* beg, char* end)
   else
   //insert making simple command*/
   
-  printf("fasd\n");
   // TEMPORARY:
   command_t returnCommand = checked_malloc(sizeof(struct command));
   returnCommand->type = SIMPLE_COMMAND;
