@@ -1,5 +1,13 @@
 // UCLA CS 111 Lab 1 command reading
 
+/* TODO:comments
+        make_command -- OR, AND
+        deal with new line counts
+        syntax error messages
+        read_command
+
+*/ 
+
 #include "command.h"
 #include "command-internals.h"
 #include "alloc.h"
@@ -16,7 +24,8 @@ struct command_stream
 };
 
 /* Checks to see that a character in the input stream is valid */
-bool isValid(char c) {
+bool isValid(char c) 
+{
   //TODO: finish implementation
   return true;
   if (isalpha(c) || 
@@ -61,8 +70,12 @@ char* buildString(int (*get_next_byte) (void *),
   int size = INC;
   char* string = calloc(size, sizeof(char));
   int i = 0;
+  int line = 1;
   char c  = get_next_byte(get_next_byte_argument);
-  if (!isValid(c)) error (1, 0, "invalid character in input stream");
+  if(c == '\n')
+    ++line;
+  if (!isValid(c)) 
+    error (1, 0, "Syntax error: Line: %d", line);
   while (c != EOF)
     {
       if (i >= size)
@@ -71,7 +84,10 @@ char* buildString(int (*get_next_byte) (void *),
         }
       string[i] = c;
       c  = get_next_byte(get_next_byte_argument);
-      if (!isValid(c)) error (1, 0, "invalid character in input stream");
+      if(c == '\n')
+        ++line;
+      if (!isValid(c)) 
+        error (1, 0, "Syntax error: Line: %d", line);
       ++i;
     }
   return string;
@@ -82,6 +98,7 @@ char* buildString(int (*get_next_byte) (void *),
 char* get_opt_ptr(char* beg, char* end)
 {
   char* ptr = end;
+  // Scan for sequence command
   while(ptr != beg)
   {
     if (*ptr == ';')
@@ -89,6 +106,7 @@ char* get_opt_ptr(char* beg, char* end)
     --ptr;
   }
   ptr = end;
+  // Scan for subshell command
   while(ptr != beg)
   {
     if (*ptr == ')')
@@ -96,11 +114,12 @@ char* get_opt_ptr(char* beg, char* end)
     --ptr;
   }
   ptr = end;
+  // Scan for pipe command
   while(ptr != beg)
   { 
     if (*ptr == '|')
     {
-      //Check if OR
+      // Check if pipe
       if(*(ptr-1) != '|')
         return ptr;
       ptr--;
@@ -108,6 +127,7 @@ char* get_opt_ptr(char* beg, char* end)
     --ptr;
   }
   ptr = end;
+  // Scan for AND command
   while(ptr != beg)
   {
     if (*ptr == '&')
@@ -115,6 +135,7 @@ char* get_opt_ptr(char* beg, char* end)
     --ptr;
   }
   ptr = end;
+  // Scan for OR command
   while(ptr != beg)
   {
     if (*ptr == '|')
@@ -140,12 +161,12 @@ make_command (char* beg, char* end)
    * (lowest)
    * */
 
-  //Check command type
+  // Check command type and makes command, calling function recursively if needed
   if (optPtr == NULL)
   {
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
-    char* word = malloc(sizeof(char)*(end-beg));
+    char* word = checked_malloc(sizeof(char)*(end-beg));
     char* ptr = beg;
     int i = 0;
     for (; ptr != end + 1; ++ptr, ++i) 
@@ -175,23 +196,6 @@ make_command (char* beg, char* end)
   }
   
   return com;
-
-  /*if (*optPtr == ')')
-  {
-    
-  }
-  else if (*optPtr == '|')
-  {
-    //If pipe
-    if (*(--optPtr) != '|')
-)   //insert making pipe command
-    else
-    //insert making OR command
-  }
-  else if (*optPtr == '&')
-  //insert making AND command
-  else
-  //insert making simple command*/
   
 }
 
@@ -206,7 +210,6 @@ command_stream_t
 make_command_stream (int (*get_next_byte) (void *),
 		     void *get_next_byte_argument)
 {
-
   char* string = buildString(get_next_byte, get_next_byte_argument);
   //puts(string);
 
