@@ -27,7 +27,7 @@ struct command_stream
 bool isValid(char c) 
 {
   //TODO: finish implementation
-  return true;
+  //return true;
   if (isalpha(c) || 
       isdigit(c) ||
       c == '!' ||
@@ -40,7 +40,10 @@ bool isValid(char c)
       c == ':' ||
       c == '@' ||
       c == '^' ||
-      c == '_' )
+      c == '_' ||
+      c == ' ' ||
+      c == '\n'||
+      c == '\t')
       return true;
     else
       return false;
@@ -146,11 +149,11 @@ char* get_opt_ptr(char* beg, char* end)
 }
 
 command_t
-make_command (char* beg, char* end)
+make_command (char* beg, char* end, int line)
 {
   char* optPtr = get_opt_ptr(beg, end);
   command_t com = checked_malloc(sizeof(struct command));
-  
+
   /* OPERATOR PRECEDENCE
    * (highest)
    * ;
@@ -169,30 +172,60 @@ make_command (char* beg, char* end)
     char* word = checked_malloc(sizeof(char)*(end-beg));
     char* ptr = beg;
     int i = 0;
-    for (; ptr != end + 1; ++ptr, ++i) 
-    {
-      word[i] = *ptr;
+    bool foundSpace = false;
+    for (; ptr != end + 1; ++ptr) 
+    {  
+      // Check if newline
+      if (*ptr == '\n')
+      {
+        ++line;
+        foundSpace = false;
+      }
+      else
+      {
+        // Skip over extra white spaces and tabs
+        if (!foundSpace && *ptr != '\t')
+        {
+          word[i] = *ptr;
+          if (*ptr == ' ')
+            foundSpace = true;
+          else
+            foundSpace = false;
+          ++i;
+        }
+        else
+        {
+          if (*ptr != ' ' && *ptr != '\t')
+          {
+            word[i] = *ptr;
+            ++i;
+            foundSpace = false;
+          }
+          else if (*ptr != '\t')
+            foundSpace = true;
+        }
+      }
     }
     *(com->u.word) = word;
   }
   else if (*optPtr == ';')
   {
     com->type = SEQUENCE_COMMAND;
-    com->u.command[0] = make_command(beg, optPtr - 1);
-    com->u.command[1] = make_command(optPtr + 1, end);
+    com->u.command[0] = make_command(beg, optPtr - 1, line);
+    com->u.command[1] = make_command(optPtr + 1, end, line);
   }
   else if (*optPtr == ')')
   {
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
     while (*open != '(') ++open;
-    com->u.subshell_command = make_command(open + 1, optPtr - 1);
+    com->u.subshell_command = make_command(open + 1, optPtr - 1, line);
   }
   else if (*optPtr == '|' && *(optPtr-1) != '|')
   {
     com->type = PIPE_COMMAND;
-    com->u.command[0] = make_command(beg, optPtr - 1);
-    com->u.command[1] = make_command(optPtr + 1, end);
+    com->u.command[0] = make_command(beg, optPtr - 1, line);
+    com->u.command[1] = make_command(optPtr + 1, end, line);
   }
   
   return com;
@@ -219,7 +252,7 @@ make_command_stream (int (*get_next_byte) (void *),
   --size;
   char* end = string + size -1;
 
-  command_t com = make_command(string, end);
+  command_t com = make_command(string, end, 0);
 
   command_stream_t stream = checked_malloc(sizeof(struct command_stream));
 
