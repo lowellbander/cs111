@@ -84,6 +84,13 @@ char* get_opt_ptr(char* beg, char* end)
   char* ptr = end;
   while(ptr != beg)
   {
+    if (*ptr == ';')
+      return ptr;
+    --ptr;
+  }
+  ptr = end;
+  while(ptr != beg)
+  {
     if (*ptr == ')')
       return ptr;
     --ptr;
@@ -123,6 +130,16 @@ make_command (char* beg, char* end)
   char* optPtr = get_opt_ptr(beg, end);
   command_t com = checked_malloc(sizeof(struct command));
   
+  /* OPERATOR PRECEDENCE
+   * (highest)
+   * ;
+   * (, )
+   * |
+   * &&
+   * ||
+   * (lowest)
+   * */
+
   //Check command type
   if (optPtr == NULL)
   {
@@ -137,12 +154,24 @@ make_command (char* beg, char* end)
     }
     *(com->u.word) = word;
   }
+  else if (*optPtr == ';')
+  {
+    com->type = SEQUENCE_COMMAND;
+    com->u.command[0] = make_command(beg, optPtr - 1);
+    com->u.command[1] = make_command(optPtr + 1, end);
+  }
   else if (*optPtr == ')')
   {
+    com->type = SUBSHELL_COMMAND;
     char* open = beg;
     while (*open != '(') ++open;
-    com->type = SUBSHELL_COMMAND;
     com->u.subshell_command = make_command(open + 1, optPtr - 1);
+  }
+  else if (*optPtr == '|' && *(optPtr-1) != '|')
+  {
+    com->type = PIPE_COMMAND;
+    com->u.command[0] = make_command(beg, optPtr - 1);
+    com->u.command[1] = make_command(optPtr + 1, end);
   }
   
   return com;
