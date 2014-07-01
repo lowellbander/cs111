@@ -2,7 +2,7 @@
 
 /* TODO:comments
         make_command -- OR, AND
-        deal with new line counts
+        deal with new line counts, passing it back up tree
         syntax error messages
         read_command
 
@@ -70,29 +70,28 @@ char* buildString(int (*get_next_byte) (void *),
 		     void *get_next_byte_argument)
 {
   const int INC = 10;
-  int size = INC;
+  size_t size = INC;
   char* string = calloc(size, sizeof(char));
   int i = 0;
   int line = 1;
   char c  = get_next_byte(get_next_byte_argument);
   if(c == '\n')
     ++line;
-  if (!isValid(c)) 
-    error (1, 0, "Syntax error: Line: %d", line);
   while (c != EOF)
+  {
+    if (!isValid(c)) 
+      error (1, 0, "Syntax error, invalid <%c>: Line: %d", c, line);
+    if ((size_t)i >= size)
     {
-      if (i >= size)
-        {
-          string = resize(string, size + INC, size);
-        }
-      string[i] = c;
-      c  = get_next_byte(get_next_byte_argument);
-      if(c == '\n')
-        ++line;
-      if (!isValid(c)) 
-        error (1, 0, "Syntax error: Line: %d", line);
-      ++i;
+      size += INC;
+      string = checked_grow_alloc(string, &size);
     }
+    string[i] = c;
+    c  = get_next_byte(get_next_byte_argument);
+    if(c == '\n')
+      ++line;
+    ++i;
+  }
   return string;
 }
 
@@ -147,6 +146,8 @@ char* get_opt_ptr(char* beg, char* end)
   }
   return NULL;
 }
+
+/* Makes a single command, can be called recursively */
 
 command_t
 make_command (char* beg, char* end, int line)
@@ -227,6 +228,20 @@ make_command (char* beg, char* end, int line)
     com->u.command[0] = make_command(beg, optPtr - 1, line);
     com->u.command[1] = make_command(optPtr + 1, end, line);
   }
+  else if (*optPtr == '|')
+  {
+    com->type = OR_COMMAND;
+    com->u.command[0] = make_command(beg, optPtr - 1, line);
+    com->u.command[1] = make_command(optPtr + 1, end, line);
+  }
+  else
+  {
+    if (*optPtr == '&' && *(optPtr-1) != '&')
+      error (1, 0, "Syntax error, no second &: Line: %d", line);
+    com->type = AND_COMMAND;
+    com->u.command[0] = make_command(beg, optPtr - 1, line);
+    com->u.command[1] = make_command(optPtr + 1, end, line);
+  }
   
   return com;
   
@@ -235,8 +250,10 @@ make_command (char* beg, char* end, int line)
 char* commandType(command_t com)
 {
   enum command_type type = com->type;
-  if (type == SIMPLE_COMMAND) return "type: SIMPLE_COMMAND\n";
-  else return "command type not handled, yet\n";
+  if (type == SIMPLE_COMMAND) 
+    return "type: SIMPLE_COMMAND\n";
+  else 
+    return "command type not handled, yet\n";
 }
 
 command_stream_t
