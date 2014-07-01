@@ -112,6 +112,7 @@ char* get_opt_ptr(char* beg, char* end)
   {
     if (*ptr == '|')
       return ptr;
+    --ptr;
   }
   return NULL;
 }
@@ -119,11 +120,26 @@ char* get_opt_ptr(char* beg, char* end)
 command_t
 make_command (char* beg, char* end)
 {
-  //char* optPtr = get_opt_ptr(beg, end);
-  //enum command_type typetest = PIPE_COMMAND;
-  //struct command commie = {.type = typetest};
+  char* optPtr = get_opt_ptr(beg, end);
+  command_t com = checked_malloc(sizeof(struct command));
   
   //Check command type
+  if (optPtr == NULL)
+    {
+      com->type = SIMPLE_COMMAND;
+      com->u.word = checked_malloc(20*sizeof(char*));
+      char* word = malloc(sizeof(char)*(end-beg));
+      char* ptr = beg;
+      int i = 0;
+      for (; ptr != end + 1; ++ptr, ++i) 
+      {
+        word[i] = *ptr;
+      }
+      *(com->u.word) = word;
+    }
+  
+  return com;
+
   /*if (*optPtr == ')')
   {
     
@@ -141,13 +157,6 @@ make_command (char* beg, char* end)
   else
   //insert making simple command*/
   
-  // TEMPORARY:
-  command_t returnCommand = checked_malloc(sizeof(struct command));
-  returnCommand->type = SIMPLE_COMMAND;
-  returnCommand->u.word = checked_malloc(20*sizeof(char*));
-  *(returnCommand->u.word) = "a>b<c";
-
-  return returnCommand;
 }
 
 char* commandType(command_t com)
@@ -184,15 +193,8 @@ make_command_stream (int (*get_next_byte) (void *),
 command_t
 read_command_stream (command_stream_t s)
 {
-  if (s->curr == s->head) printf("handling head\n");
-  else printf("handling child\n");
-
-  //printf(commandType(s->curr));
-
   command_t com = s->curr;
-
   s->curr = NULL;
   return com;
-
-  
 }
+
