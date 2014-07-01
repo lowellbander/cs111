@@ -125,18 +125,25 @@ make_command (char* beg, char* end)
   
   //Check command type
   if (optPtr == NULL)
+  {
+    com->type = SIMPLE_COMMAND;
+    com->u.word = checked_malloc(20*sizeof(char*));
+    char* word = malloc(sizeof(char)*(end-beg));
+    char* ptr = beg;
+    int i = 0;
+    for (; ptr != end + 1; ++ptr, ++i) 
     {
-      com->type = SIMPLE_COMMAND;
-      com->u.word = checked_malloc(20*sizeof(char*));
-      char* word = malloc(sizeof(char)*(end-beg));
-      char* ptr = beg;
-      int i = 0;
-      for (; ptr != end + 1; ++ptr, ++i) 
-      {
-        word[i] = *ptr;
-      }
-      *(com->u.word) = word;
+      word[i] = *ptr;
     }
+    *(com->u.word) = word;
+  }
+  else if (*optPtr == ')')
+  {
+    char* open = beg;
+    while (*open != '(') ++open;
+    com->type = SUBSHELL_COMMAND;
+    com->u.subshell_command = make_command(open + 1, optPtr - 1);
+  }
   
   return com;
 
