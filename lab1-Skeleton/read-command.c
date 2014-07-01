@@ -2,16 +2,11 @@
 
 #include "command.h"
 #include "command-internals.h"
+#include "alloc.h"
 #include <stdio.h>
 #include <stdlib.h> 
 
 #include <error.h>
-
-/* FIXME: You may need to add #include directives, macro definitions,
-   static function definitions, etc.  */
-
-/* FIXME: Define the type 'struct command_stream' here.  This should
-   complete the incomplete type declaration in command.h.  */
 
 struct command_stream 
 { 
@@ -41,8 +36,8 @@ bool isValid(char c) {
 */
 
 /* Used for reallocating space for char string */
-
-char* stretch(char* old, int newsize, int oldsize) 
+//TODO: replace this with realloc()
+char* resize(char* old, int newsize, int oldsize) 
 {
   char* new = calloc(newsize, sizeof(char));
   int i = 0;
@@ -55,6 +50,7 @@ char* stretch(char* old, int newsize, int oldsize)
 
 /* Builds a string from file stream */
 
+//TODO: be sure it handles newline's well
 char* buildString(int (*get_next_byte) (void *),
 		     void *get_next_byte_argument)
 {
@@ -67,7 +63,7 @@ char* buildString(int (*get_next_byte) (void *),
     {
       if (i >= size)
         {
-          string = stretch(string, size + INC, size);
+          string = resize(string, size + INC, size);
         }
       string[i] = c;
       c  = get_next_byte(get_next_byte_argument);
@@ -140,33 +136,48 @@ make_command (char* beg, char* end)
   else
   //insert making simple command*/
   
-  command_t returnCommand = malloc(sizeof(struct command));
+  // TEMPORARY:
+  command_t returnCommand = checked_malloc(sizeof(struct command));
   returnCommand->type = SIMPLE_COMMAND;
-  char* foo = "asdg";
-  returnCommand->u.word = &foo;
+  //char* word = checked_malloc(sizeof(char)*20);
+  //word = "the command";
+
+  //printf("address: %p\n", &word[0]);
+
+  returnCommand->u.word = checked_malloc(20*sizeof(char*));
+  *(returnCommand->u.word) = "a>b<c";
+
+  //printf("address: %p\n", &(returnCommand->u.word[0]));
+  //printf("word: %s\n", *(returnCommand->u.word));
+
   return returnCommand;
+}
+
+char* commandType(command_t com)
+{
+  enum command_type type = com->type;
+  if (type == SIMPLE_COMMAND) return "type: SIMPLE_COMMAND\n";
+  else return "command type not handled, yet\n";
 }
 
 command_stream_t
 make_command_stream (int (*get_next_byte) (void *),
 		     void *get_next_byte_argument)
 {
-  /* FIXME: Replace this with your implementation.  You may need to
-     add auxiliary functions and otherwise modify the source code.
-     You can also use external functions defined in the GNU C Library.  */
 
   char* string = buildString(get_next_byte, get_next_byte_argument);
-  puts(string);
+  //puts(string);
 
+  // Determine the size of the string
   int size = 0;
-  while (string[size] != 0)
-  {
-    ++size;
-  }
+  while (string[size] != 0) { ++size; }
   --size;
   char* end = string + size -1;
+
   command_t com = make_command(string, end);
-  command_stream_t stream = malloc(sizeof(struct command_stream));
+
+  command_stream_t stream = checked_malloc(sizeof(struct command_stream));
+
   stream->head = com;
   stream->curr = com;
   
@@ -176,14 +187,15 @@ make_command_stream (int (*get_next_byte) (void *),
 command_t
 read_command_stream (command_stream_t s)
 {
-  /* FIXME: Replace this with your implementation too.  */
-  if (s->curr == NULL) return 0;
-  command_t temp = s->curr;
-  s->curr = NULL;
-  printf("asd: <%s>", *(temp->u.word));
-  return temp;
+  if (s->curr == s->head) printf("handling head\n");
+  else printf("handling child\n");
 
-  
+  //printf(commandType(s->curr));
+
+  command_t com = s->curr;
+
+  s->curr = NULL;
+  return com;
+
   error (1, 0, "command reading not yet implemented");
-  return 0;
 }
