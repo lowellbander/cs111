@@ -139,16 +139,8 @@ make_command (char* beg, char* end)
   // TEMPORARY:
   command_t returnCommand = checked_malloc(sizeof(struct command));
   returnCommand->type = SIMPLE_COMMAND;
-  //char* word = checked_malloc(sizeof(char)*20);
-  //word = "the command";
-
-  //printf("address: %p\n", &word[0]);
-
   returnCommand->u.word = checked_malloc(20*sizeof(char*));
   *(returnCommand->u.word) = "a>b<c";
-
-  //printf("address: %p\n", &(returnCommand->u.word[0]));
-  //printf("word: %s\n", *(returnCommand->u.word));
 
   return returnCommand;
 }
