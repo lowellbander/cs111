@@ -59,6 +59,7 @@ char* buildString(int (*get_next_byte) (void *),
   char* string = calloc(size, sizeof(char));
   int i = 0;
   char c  = get_next_byte(get_next_byte_argument);
+  if (!isValid(c)) error (1, 0, "invalid character in input stream");
   while (c != EOF)
     {
       if (i >= size)
@@ -67,6 +68,7 @@ char* buildString(int (*get_next_byte) (void *),
         }
       string[i] = c;
       c  = get_next_byte(get_next_byte_argument);
+      if (!isValid(c)) error (1, 0, "invalid character in input stream");
       ++i;
     }
   return string;
@@ -189,5 +191,5 @@ read_command_stream (command_stream_t s)
   s->curr = NULL;
   return com;
 
-  error (1, 0, "command reading not yet implemented");
+  
 }
