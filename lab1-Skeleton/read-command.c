@@ -15,7 +15,10 @@ struct command_stream
   command_t curr;
 };
 
+/* Checks to see that a character in the input stream is valid */
 bool isValid(char c) {
+  //TODO: finish implementation
+  return true;
   if (isalpha(c) || 
       isdigit(c) ||
       c == '!' ||
@@ -116,7 +119,7 @@ char* get_opt_ptr(char* beg, char* end)
 command_t
 make_command (char* beg, char* end)
 {
-  char* optPtr = get_opt_ptr(beg, end);
+  //char* optPtr = get_opt_ptr(beg, end);
   //enum command_type typetest = PIPE_COMMAND;
   //struct command commie = {.type = typetest};
   
@@ -138,6 +141,7 @@ make_command (char* beg, char* end)
   else
   //insert making simple command*/
   
+  printf("fasd\n");
   // TEMPORARY:
   command_t returnCommand = checked_malloc(sizeof(struct command));
   returnCommand->type = SIMPLE_COMMAND;
