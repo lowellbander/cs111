@@ -3,9 +3,10 @@
 #include "command.h"
 #include "command-internals.h"
 #include "alloc.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h> 
-
+#include <ctype.h>
 #include <error.h>
 
 struct command_stream 
@@ -14,26 +15,25 @@ struct command_stream
   command_t curr;
 };
 
-/*
 bool isValid(char c) {
   if (isalpha(c) || 
       isdigit(c) ||
-      c == "!" ||
-      c == "%" ||
-      c == "+" ||
-      c == "," ||
-      c == "-" ||
-      c == "." ||
-      c == "/" ||
-      c == ":" ||
-      c == "@" ||
-      c == "^" ||
-      c == "_" )
+      c == '!' ||
+      c == '%' ||
+      c == '+' ||
+      c == ',' ||
+      c == '-' ||
+      c == '.' ||
+      c == '/' ||
+      c == ':' ||
+      c == '@' ||
+      c == '^' ||
+      c == '_' )
       return true;
     else
       return false;
 };
-*/
+
 
 /* Used for reallocating space for char string */
 //TODO: replace this with realloc()
