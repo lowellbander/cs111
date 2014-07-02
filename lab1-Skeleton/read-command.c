@@ -12,6 +12,10 @@
 
 /*For Nicole: change make_command's arguments to include line number
               command stream
+                --can simple commands ever have new lines? what about after +?
+                --check for semicolons at the end of simple command
+                --change implementation of command stream
+                      possibly struct(command, next, prev)
   
 */
 
@@ -27,8 +31,9 @@
 
 struct command_stream 
 { 
-  command_t head; 
-  command_t curr;
+  command_t command;
+  command_stream_t prev; 
+  command_stream_t next;
 };
 
 /* Checks to see that a character in the input stream is valid */
@@ -194,7 +199,7 @@ make_command (char* beg, char* end)
   {
     // check to see that operators have operands
 
-
+    //TODO: Check for ; at the end of simple command
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = malloc(sizeof(char)*(end-beg));
@@ -205,7 +210,6 @@ make_command (char* beg, char* end)
 
     for (; ptr != end; ++ptr) 
     {  
-      printf("i: %d, c: <%c>\n", i, *ptr);
       // Check if newline
       if (*ptr == '\n')
       {
@@ -217,7 +221,6 @@ make_command (char* beg, char* end)
         // Skip over extra white spaces and tabs
         if (!foundSpace && *ptr != '\t')
         {
-          //printf("Writing1\n");
           word[i] = *ptr;
           if (*ptr == ' ')
             foundSpace = true;
@@ -229,7 +232,6 @@ make_command (char* beg, char* end)
         {
           if (*ptr != ' ' && *ptr != '\t')
           {
-            //printf("Writing2\n");
             word[i] = *ptr;
             ++i;
             foundSpace = false;
@@ -240,6 +242,8 @@ make_command (char* beg, char* end)
       }
     }
     *(com->u.word) = word;
+    printf("printing from make_command: ");
+    puts(word);
   }
   else if (*optPtr == ';')
   {
@@ -280,25 +284,108 @@ command_stream_t
 make_command_stream (int (*get_next_byte) (void *),
 		     void *get_next_byte_argument)
 {
-
+  command_stream_t headStream = checked_malloc(sizeof(struct command_stream));
+  command_stream_t currStream = checked_malloc(sizeof(struct command_stream));
+  //Set current stream pointer to head
+  currStream = headStream;
+  headStream->next = NULL;
+  headStream->prev = NULL;
   char* string = buildString(get_next_byte, get_next_byte_argument);
-  char* end = string + strlen(string);
-  printf("strlen: %d  end: <%c>\n", strlen(string), *end);
-  command_t com = make_command(string, end);
+  char* beg = string;
+  int stringSize = strlen(string);
+  char* end = string + stringSize;
 
-  command_stream_t stream = checked_malloc(sizeof(struct command_stream));
+  // begin find separate complete commands
+  //TODO: figure out linked lists and how to point to next one
 
-  stream->head = com;
-  stream->curr = com;
+  // Keep track whether operator was found last until command (get rid of whitespace)
+  bool foundOperator = false;
+  // Keep track of whether found beginning of complete comman
+  bool foundCmdBeg = false;
+  // Keep track if head command was found
+  bool foundHead = false;
+  int i = 0;
+  for (i = 0; i <= stringSize; ++i)
+  { 
+    // Check for operator waiting for operand
+    if (string[i] == '|' || string[i] == '&' || string[i] == '(')
+    {
+      if (string[i] == '(')
+        foundCmdBeg = true;
+      foundOperator = true;
+    }
+    // Found new line to signal end of command 
+    else if (!foundOperator && foundCmdBeg && string[i] == '\n')
+    {
+      printf("Trying to make command\n");
+      // If found head, create another one in list to fill in
+      if (foundHead)
+      {
+        printf("Found head and making a command\n");
+        // Create another one in list and point to next one in stream
+        command_stream_t nextStream = checked_malloc(sizeof(struct command_stream));
+        currStream->next = nextStream;
+        nextStream->command = make_command(beg, &string[i]);
+        nextStream->prev = currStream;
+        nextStream->next = NULL;
+        currStream = nextStream;
+      }
+      else
+        currStream->command = make_command(beg, &string[i]);
+      beg = &string[i];
+      foundCmdBeg = false;
+      foundHead = true;
+    }
+    // If found operator, check if whitespace or operand
+    else if (foundOperator && string[i] != ' ' && string[i] != '\n' && string[i] != '\t')
+    {
+      foundOperator = false;
+    }
+    else if (string[i] != ' ' && string[i] != '\n' && string[i] != '\t')
+      foundCmdBeg = true;
+  }
+  //Check to see if whole script was one command or if there are any remaining commands left
+  if (!foundHead)
+    currStream->command = make_command(beg, end);
+  else if (foundCmdBeg)
+  {
+    printf("Making last command\n");
+    command_stream_t nextStream = checked_malloc(sizeof(struct command_stream));
+    currStream->next = nextStream;
+    nextStream->command = make_command(beg, &string[i]);
+    nextStream->prev = currStream;
+    nextStream->next = NULL;
+    currStream = nextStream;
+  }
+
+  if (currStream->next == NULL && currStream->prev == headStream && headStream->next == currStream)
+    printf("Passed Sanity Check\n");
   
-  return stream;
+  return headStream;
 }
 
 command_t
 read_command_stream (command_stream_t s)
 {
-  command_t com = s->curr;
-  s->curr = NULL;
+  printf("entering read command\n");
+  //s = s->next
+  if (s == NULL)
+    printf("Stream is indeedy NULL\n");
+  else
+    printf(".....\n");
+  if (s->next == NULL)
+    printf("Next is NULL\n");
+  else
+    printf("oh crapola\n");
+
+  
+  command_t com = s->command;
+  if (s == NULL)
+    return NULL;
+  else if (s->next == NULL)
+    s = NULL;
+  else
+    s = s->next;
   return com;
 }
 
