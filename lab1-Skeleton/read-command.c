@@ -13,6 +13,7 @@ struct command_stream
 { 
   command_t head; 
   command_t curr;
+  int i;
 };
 
 /* Checks to see that a character in the input stream is valid */
@@ -160,6 +161,12 @@ make_command (char* beg, char* end)
     com->u.command[0] = make_command(beg, optPtr - 1);
     com->u.command[1] = make_command(optPtr + 1, end);
   }
+  else if (*optPtr == '|')
+  {
+    com->type = OR_COMMAND;
+    com->u.command[0] = make_command(beg, optPtr - 2);
+    com->u.command[1] = make_command(optPtr + 1, end);
+  }
   
   return com;
 
@@ -182,20 +189,12 @@ make_command (char* beg, char* end)
   
 }
 
-char* commandType(command_t com)
-{
-  enum command_type type = com->type;
-  if (type == SIMPLE_COMMAND) return "type: SIMPLE_COMMAND\n";
-  else return "command type not handled, yet\n";
-}
-
 command_stream_t
 make_command_stream (int (*get_next_byte) (void *),
 		     void *get_next_byte_argument)
 {
 
   char* string = buildString(get_next_byte, get_next_byte_argument);
-  //puts(string);
 
   // Determine the size of the string
   int size = 0;
@@ -209,6 +208,7 @@ make_command_stream (int (*get_next_byte) (void *),
 
   stream->head = com;
   stream->curr = com;
+  stream->i = 1;
   
   return stream;
 }
@@ -216,6 +216,7 @@ make_command_stream (int (*get_next_byte) (void *),
 command_t
 read_command_stream (command_stream_t s)
 {
+  //printf("call #%i\n", s->i++);
   command_t com = s->curr;
   s->curr = NULL;
   return com;
