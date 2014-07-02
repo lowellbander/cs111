@@ -147,10 +147,18 @@ char* get_opt_ptr(char* beg, char* end)
   return ptr;
 }
 
+void check_syntax(char* beg, char* end, char* optPtr)
+{
+  //if (optPtr == beg)
+  //  error (1, 0 , "bad syntax\n");
+  return;
+}
+
 command_t
 make_command (char* beg, char* end)
 {
   char* optPtr = get_opt_ptr(beg, end);
+  check_syntax(beg, end, optPtr);
   command_t com = checked_malloc(sizeof(struct command));
   
   /* OPERATOR PRECEDENCE
