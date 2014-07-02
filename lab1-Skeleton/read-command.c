@@ -3,6 +3,7 @@
 #include "command.h"
 #include "command-internals.h"
 #include "alloc.h"
+#include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h> 
@@ -16,9 +17,8 @@ struct command_stream
 };
 
 /* Checks to see that a character in the input stream is valid */
-bool isValid(char c) {
+void validate(char c) {
   //TODO: finish implementation
-  return true;
   if (isalpha(c) || 
       isdigit(c) ||
       c == '!' ||
@@ -31,10 +31,18 @@ bool isValid(char c) {
       c == ':' ||
       c == '@' ||
       c == '^' ||
-      c == '_' )
-      return true;
+      c == '_' ||
+      c == '<' ||
+      c == '>' ||
+      c == '\n' ||
+      c == ' ')
+      return;
     else
-      return false;
+    {
+      printf("invalid char: %c", c);
+      error(1, 0, "invalid character");
+      return;
+    }
 };
 
 /* Builds a string from file stream */
@@ -49,15 +57,17 @@ char* buildString(int (*get_next_byte) (void *),
   int i = 0;
 
   char c  = get_next_byte(get_next_byte_argument);
-  if (!isValid(c)) error (1, 0, "invalid character in input stream");
+  validate(c);
 
   while (c != EOF)
     {
-      if ((size_t)i >= size) string = checked_grow_alloc(string, &size);
+      validate(c);
+
+      if (strlen(string) >= size) 
+        string = checked_grow_alloc(string, &size);
 
       string[i] = c;
       c  = get_next_byte(get_next_byte_argument);
-      if (!isValid(c)) error (1, 0, "invalid character in input stream");
       ++i;
     }
 
@@ -182,12 +192,7 @@ make_command_stream (int (*get_next_byte) (void *),
 {
 
   char* string = buildString(get_next_byte, get_next_byte_argument);
-
-  // Determine the size of the string
-  int size = 0;
-  while (string[size] != 0) { ++size; }
-  --size;
-  char* end = string + size -1;
+  char* end = string + strlen(string) - 2;
 
   command_t com = make_command(string, end);
 
