@@ -13,7 +13,6 @@ struct command_stream
 { 
   command_t head; 
   command_t curr;
-  int i;
 };
 
 /* Checks to see that a character in the input stream is valid */
@@ -175,24 +174,6 @@ make_command (char* beg, char* end)
   }
   
   return com;
-
-  /*if (*optPtr == ')')
-  {
-    
-  }
-  else if (*optPtr == '|')
-  {
-    //If pipe
-    if (*(--optPtr) != '|')
-)   //insert making pipe command
-    else
-    //insert making OR command
-  }
-  else if (*optPtr == '&')
-  //insert making AND command
-  else
-  //insert making simple command*/
-  
 }
 
 command_stream_t
@@ -214,7 +195,6 @@ make_command_stream (int (*get_next_byte) (void *),
 
   stream->head = com;
   stream->curr = com;
-  stream->i = 1;
   
   return stream;
 }
@@ -222,7 +202,6 @@ make_command_stream (int (*get_next_byte) (void *),
 command_t
 read_command_stream (command_stream_t s)
 {
-  //printf("call #%i\n", s->i++);
   command_t com = s->curr;
   s->curr = NULL;
   return com;
