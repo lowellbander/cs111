@@ -79,6 +79,26 @@ char* buildString(int (*get_next_byte) (void *),
 char* get_opt_ptr(char* beg, char* end)
 {
   char* ptr = end;
+
+  while(ptr != beg)
+  {
+    if (*ptr == '<')
+      if (--ptr != beg && *ptr == '<')
+        if (--ptr != beg && *ptr == '<')
+          error (1, 0, "invalid syntax: <<<\n");
+    --ptr;
+  }
+  ptr = end;
+  while(ptr != beg)
+  {
+    if (*ptr == '>')
+      if (--ptr != beg && *ptr == '>')
+        if (--ptr != beg && *ptr == '>')
+          error (1, 0, "invalid syntax: >>>n");
+    --ptr;
+  }
+  ptr = end;
+
   while(ptr != beg)
   {
     if (*ptr == ';')
