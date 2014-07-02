@@ -34,6 +34,9 @@ void validate(char c) {
       c == '_' ||
       c == '<' ||
       c == '>' ||
+      c == '|' ||
+      c == ';' ||
+      c == '&' ||
       c == '\n' ||
       c == ' ')
       return;
@@ -80,6 +83,7 @@ char* get_opt_ptr(char* beg, char* end)
 {
   char* ptr = end;
 
+  // begin syntax checking
   while(ptr != beg)
   {
     if (*ptr == '<')
@@ -98,18 +102,19 @@ char* get_opt_ptr(char* beg, char* end)
     --ptr;
   }
   ptr = end;
+  // end syntax checking
 
   while(ptr != beg)
   {
     if (*ptr == ';')
-      return ptr;
+      goto done;
     --ptr;
   }
   ptr = end;
   while(ptr != beg)
   {
     if (*ptr == ')')
-      return ptr;
+      goto done;
     --ptr;
   }
   ptr = end;
@@ -119,7 +124,7 @@ char* get_opt_ptr(char* beg, char* end)
     {
       //Check if OR
       if(*(ptr-1) != '|')
-        return ptr;
+        goto done;
       ptr--;
     }
     --ptr;
@@ -128,17 +133,18 @@ char* get_opt_ptr(char* beg, char* end)
   while(ptr != beg)
   {
     if (*ptr == '&')
-      return ptr;
+      goto done;
     --ptr;
   }
   ptr = end;
   while(ptr != beg)
   {
     if (*ptr == '|')
-      return ptr;
+      goto done;
     --ptr;
   }
-  return NULL;
+  done:
+  return ptr;
 }
 
 command_t
@@ -158,8 +164,11 @@ make_command (char* beg, char* end)
    * */
 
   //Check command type
-  if (optPtr == NULL)
+  if (optPtr == beg)
   {
+    // check to see that operators have operands
+
+
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = malloc(sizeof(char)*(end-beg));
