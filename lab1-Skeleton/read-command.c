@@ -14,8 +14,7 @@
               command stream
                 --can simple commands ever have new lines? what about after +?
                 --check for semicolons at the end of simple command
-                --change implementation of command stream
-                      possibly struct(command, next, prev)
+              read command stream --- infinitely loops still
   
 */
 
@@ -296,7 +295,6 @@ make_command_stream (int (*get_next_byte) (void *),
   char* end = string + stringSize;
 
   // begin find separate complete commands
-  //TODO: figure out linked lists and how to point to next one
 
   // Keep track whether operator was found last until command (get rid of whitespace)
   bool foundOperator = false;
@@ -363,6 +361,10 @@ make_command_stream (int (*get_next_byte) (void *),
   
   return headStream;
 }
+
+
+// TODO: figure out why if s->next is NULL, setting s = s->next does not make s NULL upon leaving function
+//         currently infinitely loops, thinking s->next is never NULL
 
 command_t
 read_command_stream (command_stream_t s)
