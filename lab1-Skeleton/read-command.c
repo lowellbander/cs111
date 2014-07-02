@@ -37,20 +37,6 @@ bool isValid(char c) {
       return false;
 };
 
-
-/* Used for reallocating space for char string */
-//TODO: replace this with realloc()
-char* resize(char* old, int newsize, int oldsize) 
-{
-  char* new = calloc(newsize, sizeof(char));
-  int i = 0;
-  for (i = 0; i < oldsize; ++i)
-  {
-    new[i] = old[i];
-  }
-  return new;
-}
-
 /* Builds a string from file stream */
 
 //TODO: be sure it handles newline's well
@@ -58,22 +44,23 @@ char* buildString(int (*get_next_byte) (void *),
 		     void *get_next_byte_argument)
 {
   const int INC = 10;
-  int size = INC;
+  size_t size = INC;
   char* string = calloc(size, sizeof(char));
   int i = 0;
+
   char c  = get_next_byte(get_next_byte_argument);
   if (!isValid(c)) error (1, 0, "invalid character in input stream");
+
   while (c != EOF)
     {
-      if (i >= size)
-        {
-          string = resize(string, size + INC, size);
-        }
+      if ((size_t)i >= size) string = checked_grow_alloc(string, &size);
+
       string[i] = c;
       c  = get_next_byte(get_next_byte_argument);
       if (!isValid(c)) error (1, 0, "invalid character in input stream");
       ++i;
     }
+
   return string;
 }
 
