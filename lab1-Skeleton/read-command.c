@@ -167,6 +167,12 @@ make_command (char* beg, char* end)
     com->u.command[0] = make_command(beg, optPtr - 2);
     com->u.command[1] = make_command(optPtr + 1, end);
   }
+  else if (*optPtr == '&')
+  {
+    com->type = AND_COMMAND;
+    com->u.command[0] = make_command(beg, optPtr - 2);
+    com->u.command[1] = make_command(optPtr + 1, end);
+  }
   
   return com;
 
