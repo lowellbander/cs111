@@ -11,6 +11,7 @@
 #include <error.h>
 
 typedef struct node *node_t;
+typedef struct line *line_t;
 
 struct command_stream 
 { 
@@ -21,6 +22,12 @@ struct node
 {
   command_t self;
   node_t next;
+};
+
+struct line 
+{
+  char* body;
+  int num;
 };
 
 /* Checks to see that a character in the input stream is valid */
@@ -230,23 +237,73 @@ make_command (char* beg, char* end)
   return com;
 }
 
-command_stream_t
-make_command_stream (int (*get_next_byte) (void *),
-		     void *get_next_byte_argument)
+int line_nums(char* beg, char* end)
 {
+  int nLines = 0;
+  char* ptr = beg;
+  while (ptr != end)
+  {
+    if (*ptr == '\n')
+      ++nLines;
+    ++ptr;
+  }
+  return nLines;
+}
 
-  char* string = buildString(get_next_byte, get_next_byte_argument);
-  char* end = string + strlen(string) - 2;
-
-  command_t com = make_command(string, end);
-
+void push(command_stream_t stream, command_t com)
+{
   node_t node = checked_malloc(sizeof(struct node));
   node->self = com;
   node->next = NULL;
 
+  if (stream->curr == NULL)
+  {
+    // the stream is empty 
+    stream->curr = node;
+    return;
+  }
+  else
+  {
+    // there are already nodes in the stream
+    node_t last = stream->curr;
+    while (last->next != NULL) last = last->next;
+    last->next = node;
+    return;
+  }
+}
+
+char* copy(char* beg, char* end)
+{
+  int size = end - beg;
+  char* string = checked_malloc(size);
+  int i;
+  for (i = 0; i < size; ++i, ++beg) 
+    string[i] = *beg;
+
+  return string;
+}
+
+command_stream_t
+make_command_stream (int (*get_next_byte) (void *),
+		     void *get_next_byte_argument)
+{
   command_stream_t stream = checked_malloc(sizeof(struct command_stream));
 
-  stream->curr = node;
+  char* string = buildString(get_next_byte, get_next_byte_argument);
+  char* end = string + strlen(string) - 2;
+  
+  int nLines = line_nums(string, end);
+  int i;
+  char* a = string;
+  char* b;
+  for (i = 0; i < nLines; ++i)
+  {
+      b = a;
+      while (*b != '\n') ++b;
+      char* line = copy(a, b);
+      push(stream, make_command(line, line + (int)strlen(line)));
+      a = ++b;
+  }
   
   return stream;
 }
