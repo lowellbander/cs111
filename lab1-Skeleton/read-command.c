@@ -45,6 +45,8 @@ void validate(char c) {
       c == ';' ||
       c == '&' ||
       c == '\n' ||
+      c == '(' ||
+      c == ')' ||
       c == ' ')
       return;
     else
@@ -183,7 +185,6 @@ make_command (char* beg, char* end)
   {
     // check to see that operators have operands
 
-
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = malloc(sizeof(char)*(end-beg));
@@ -286,6 +287,7 @@ make_command_stream (int (*get_next_byte) (void *),
   char* end = string + strlen(string) - 2;
   
   int nLines = line_nums(string, end);
+  if (nLines == 0) nLines = 1;
   int i;
   char* a = string;
   char* b;
