@@ -75,7 +75,7 @@ void validate(char c) {
 //TODO: be sure it handles newline's well
 char* buildString(int (*get_next_byte) (void *),
 		     void *get_next_byte_argument)
-{
+{ 
   size_t size = 8;
   char* string = checked_malloc(8*sizeof(char));
   int i = 0;
@@ -91,7 +91,10 @@ char* buildString(int (*get_next_byte) (void *),
       validate(c);
 
       if (strlen(string) >= size) 
+      {
+        size += size;
         string = checked_grow_alloc(string, &size);
+      }
       string[i] = c;
       c  = get_next_byte(get_next_byte_argument);
       if(c == '\n')
@@ -99,7 +102,7 @@ char* buildString(int (*get_next_byte) (void *),
       ++i;
     }
   //Null terminate string
-  size = 1;
+  size += 1;
   if (strlen(string) >= size) 
     string = checked_grow_alloc(string, &size);
   string[i] = '\0';
@@ -140,7 +143,6 @@ char* get_opt_ptr(char* beg, char* end)
   // Scan for sequence command
   while(ptr != beg)
   {
-    printf("found: <%c>\n", *ptr);
     // Checking for sequence command or end of complete command
     if (!foundNonWhite && *ptr != '\n' 
                        && *ptr != '\t' 
@@ -150,7 +152,6 @@ char* get_opt_ptr(char* beg, char* end)
                        && *ptr != ';')
     {
       foundNonWhite = true;
-      printf("Found non white is true\n");
     }
     if (foundNonWhite && *ptr == ';')
     {
@@ -217,6 +218,7 @@ make_command (char* beg, char* end)
    * */
 
   // Check command type and makes command, calling function recursively if needed
+  // Begin making simple command
   if (optPtr == beg)
   {
     // check to see that operators have operands
@@ -228,44 +230,36 @@ make_command (char* beg, char* end)
     char* ptr = beg;
     int i = 0;
     int line = 0;
-    bool foundSpace = false;
-
-    // Syntax checking for simple command
-    if (!isalpha(*beg) && !isdigit(*beg) && *beg != ' ' && *beg != '\t' && *beg != '\n')
-      error(1, 0, "Syntax error: Line: %d, simple command cannot start with <%c>\n", line, *beg);
+    // Consecutive white spaces
+    int consecSpace = 0;;
+    bool foundBegWord = false;
 
     // Create simple command, skipping over white space
     for (; ptr != end; ++ptr) 
     {  
-      // Check if newline (should never go here)
-      if (*ptr == '\n')
+      //Find start of simple command
+      if (!foundBegWord && *ptr != ' ' && *ptr != '\t')
       {
-        ++line;
-        foundSpace = false;
+        // Syntax checking for simple command -- check it starts with digit/alpha
+        if (!isalpha(*beg) && !isdigit(*beg) && *beg != ' ' && *beg != '\t' && *beg != '\n')
+          error(1, 0, "Syntax error: Line: %d, simple command cannot start with <%c>\n", line, *beg);
+        word[i] = *ptr;
+        ++i;
+        foundBegWord = true;
+        consecSpace = 0;
       }
+      // Skip over extra white spaces/tabs
       else
-      {
-        // Skip over extra white spaces and tabs
-        if (!foundSpace && *ptr != '\t')
+      { 
+        if (consecSpace == 0 || (*ptr != ' ' && *ptr != '\t'))
         {
           word[i] = *ptr;
-          if (*ptr == ' ')
-            foundSpace = true;
-          else
-            foundSpace = false;
           ++i;
         }
+        if (*ptr == ' ' || *ptr == '\t')
+          ++consecSpace;
         else
-        {
-          if (*ptr != ' ' && *ptr != '\t')
-          {
-            word[i] = *ptr;
-            ++i;
-            foundSpace = false;
-          }
-          else if (*ptr != '\t')
-            foundSpace = true;
-        }
+          consecSpace = 0;
       }
     }
     word[i] = '\0';
@@ -273,9 +267,10 @@ make_command (char* beg, char* end)
     if (word[i-1] == ';')
       word[i-1] = '\0';
     *(com->u.word) = word;
-    printf("Making simple command: ");
+    printf("Made simple command: ");
     puts(word);
   }
+  // Begin making sequence command
   else if (*optPtr == ';')
   {
     printf("Making sequence command\n");
@@ -283,6 +278,7 @@ make_command (char* beg, char* end)
     com->u.command[0] = make_command(beg, optPtr - 1);
     com->u.command[1] = make_command(optPtr + 1, end);
   }
+  // Begin making subshell command
   else if (*optPtr == ')')
   {
     printf("Making subshell command\n");
@@ -291,6 +287,7 @@ make_command (char* beg, char* end)
     while (*open != '(') ++open;
     com->u.subshell_command = make_command(open + 1, optPtr - 1);
   }
+  // Begin making pipe command
   else if (*optPtr == '|' && *(optPtr-1) != '|')
   {
     printf("Making pipe command\n");
@@ -298,6 +295,7 @@ make_command (char* beg, char* end)
     com->u.command[0] = make_command(beg, optPtr - 1);
     com->u.command[1] = make_command(optPtr + 1, end);
   }
+  // Begin making OR command
   else if (*optPtr == '|')
   {
     printf("Making OR command\n");
@@ -305,6 +303,7 @@ make_command (char* beg, char* end)
     com->u.command[0] = make_command(beg, optPtr - 2);
     com->u.command[1] = make_command(optPtr + 1, end);
   }
+  // Begin making AND command
   else if (*optPtr == '&')
   {
     printf("Making AND command\n");
@@ -336,21 +335,26 @@ make_command_stream (int (*get_next_byte) (void *),
   // Keep track whether operator was found last until command (get rid of whitespace)
   bool foundOperator = false;
   // Keep track of whether found beginning of complete comman
-  bool foundCmdBeg = false;
+  int cmdSize = 0;
   // Keep track if head command was found
   bool foundHead = false;
   int i = 0;
+  printf("Size: %d\n", stringSize);
   for (i = 0; i <= stringSize; ++i)
   { 
+    printf("i: %d, string[%d]: <%c>\n", i, i, string[i]);
+    if (cmdSize > 0) printf("Found cmd beg\n");
+    if (foundHead) printf("Found head\n");
+    if (foundOperator) printf("Found op\n");
     // Check for operator waiting for operand
     if (string[i] == '|' || string[i] == '&' || string[i] == '(')
     {
       if (string[i] == '(')
-        foundCmdBeg = true;
+        cmdSize += 1;
       foundOperator = true;
     }
     // Found new line to signal end of command 
-    else if (!foundOperator && foundCmdBeg && string[i] == '\n')
+    else if (!foundOperator && cmdSize > 0 && string[i] == '\n')
     {
       printf("Trying to make command\n");
       // If found head, create another one in list to fill in
@@ -368,16 +372,20 @@ make_command_stream (int (*get_next_byte) (void *),
       else
         currStream->command = make_command(beg, &string[i]);
       beg = &string[i];
-      foundCmdBeg = false;
+      cmdSize = 0;
       foundHead = true;
     }
     // If found operator, check if whitespace or operand
     else if (foundOperator && string[i] != ' ' && string[i] != '\n' && string[i] != '\t')
-    {
       foundOperator = false;
-    }
     else if (string[i] != ' ' && string[i] != '\n' && string[i] != '\t')
-      foundCmdBeg = true;
+    {
+      // Found beginning of command
+      if (cmdSize == 0)
+        beg = &string[i];
+
+      cmdSize += 1;
+    }
   }
   //Check to see if whole script was one command or if there are any remaining commands left
   if (!foundHead)
@@ -385,12 +393,12 @@ make_command_stream (int (*get_next_byte) (void *),
     printf("Never found head, making command.\n");
     currStream->command = make_command(beg, end);
   }
-  else if (foundCmdBeg)
+  else if (cmdSize > 0)
   {
     printf("Making last command\n");
     command_stream_t nextStream = checked_malloc(sizeof(struct command_stream));
     currStream->next = nextStream;
-    nextStream->command = make_command(beg, &string[i]);
+    nextStream->command = make_command(beg, end);
     nextStream->prev = currStream;
     nextStream->next = NULL;
     currStream = nextStream;
@@ -419,7 +427,6 @@ read_command_stream (command_stream_t s)
     printf("Next is NULL\n");
   else
     printf("oh crapola\n");
-
   command_t com = checked_malloc(sizeof(struct command));
   com = s->command;
   if (s == NULL)
@@ -430,7 +437,7 @@ read_command_stream (command_stream_t s)
     printf("s: %p\n", s);
     printf("n: %p\n", s->next);
     s = s->next;
-    //printf("nexts: %p\n", s);
+    printf("nexts: %p\n", s);
     //printf("nextn: %p\n", s->next);
   }
   return com;
