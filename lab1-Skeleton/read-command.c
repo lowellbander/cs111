@@ -23,38 +23,53 @@ struct node
   node_t next;
 };
 
+char *join(const char* s1, const char* s2)
+{
+    char* result = checked_malloc(strlen(s1) + strlen(s2) + 1);
+
+    strcpy(result, s1);
+    strcat(result, s2);
+
+    return result;
+}
+
 /* Checks to see that a character in the input stream is valid */
-void validate(char c) {
+void validate(char* string, int line_num) {
   //TODO: finish implementation
-  if (isalpha(c) || 
-      isdigit(c) ||
-      c == '!' ||
-      c == '%' ||
-      c == '+' ||
-      c == ',' ||
-      c == '-' ||
-      c == '.' ||
-      c == '/' ||
-      c == ':' ||
-      c == '@' ||
-      c == '^' ||
-      c == '_' ||
-      c == '<' ||
-      c == '>' ||
-      c == '|' ||
-      c == ';' ||
-      c == '&' ||
-      c == '\n' ||
-      c == '(' ||
-      c == ')' ||
-      c == ' ')
-      return;
-    else
-    {
-      printf("invalid char: %c", c);
-      error(1, 0, "invalid character");
-      return;
-    }
+  int i;
+  int len = strlen(string);
+  for (i = 0; i < len; ++i)
+  {
+    char c = string[i];
+    if (isalpha(c) || 
+        isdigit(c) ||
+        c == '!' ||
+        c == '%' ||
+        c == '+' ||
+        c == ',' ||
+        c == '-' ||
+        c == '.' ||
+        c == '/' ||
+        c == ':' ||
+        c == '@' ||
+        c == '^' ||
+        c == '_' ||
+        c == '<' ||
+        c == '>' ||
+        c == '|' ||
+        c == ';' ||
+        c == '&' ||
+        c == '\n' ||
+        c == '(' ||
+        c == ')' ||
+        c == ' ')
+        continue;
+      else
+      {
+        error(1, 0, "invalid character on line %i: %c", line_num, c);
+        return;
+      }
+  }
 };
 
 /* Builds a string from file stream */
@@ -69,11 +84,11 @@ char* buildString(int (*get_next_byte) (void *),
   int i = 0;
 
   char c  = get_next_byte(get_next_byte_argument);
-  validate(c);
+  //validate(c);
 
   while (c != EOF)
     {
-      validate(c);
+      //validate(c);
 
       if (strlen(string) >= size) 
         string = checked_grow_alloc(string, &size);
@@ -93,24 +108,24 @@ char* get_opt_ptr(char* beg, char* end)
   char* ptr = end;
 
   // begin syntax checking
-  while(ptr != beg)
-  {
-    if (*ptr == '<')
-      if (--ptr != beg && *ptr == '<')
-        if (--ptr != beg && *ptr == '<')
-          error (1, 0, "invalid syntax: <<<\n");
-    --ptr;
-  }
-  ptr = end;
-  while(ptr != beg)
-  {
-    if (*ptr == '>')
-      if (--ptr != beg && *ptr == '>')
-        if (--ptr != beg && *ptr == '>')
-          error (1, 0, "invalid syntax: >>>n");
-    --ptr;
-  }
-  ptr = end;
+  //while(ptr != beg)
+  //{
+  //  if (*ptr == '<')
+  //    if (--ptr != beg && *ptr == '<')
+  //      if (--ptr != beg && *ptr == '<')
+  //        error (1, 0, "invalid syntax: <<<\n");
+  //  --ptr;
+  //}
+  //ptr = end;
+  //while(ptr != beg)
+  //{
+  //  if (*ptr == '>')
+  //    if (--ptr != beg && *ptr == '>')
+  //      if (--ptr != beg && *ptr == '>')
+  //        error (1, 0, "invalid syntax: >>>n");
+  //  --ptr;
+  //}
+  //ptr = end;
   // end syntax checking
 
   while(ptr != beg)
@@ -164,7 +179,7 @@ void check_syntax(char* beg, char* end, char* optPtr)
 }
 
 command_t
-make_command (char* beg, char* end)
+make_command (char* beg, char* end, int line_num)
 {
   char* optPtr = get_opt_ptr(beg, end);
   check_syntax(beg, end, optPtr);
@@ -184,7 +199,6 @@ make_command (char* beg, char* end)
   if (optPtr == beg)
   {
     // check to see that operators have operands
-
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = malloc(sizeof(char)*(end-beg));
@@ -194,38 +208,39 @@ make_command (char* beg, char* end)
     {
       word[i] = *ptr;
     }
+    validate(word, line_num);
     *(com->u.word) = word;
   }
   else if (*optPtr == ';')
   {
     com->type = SEQUENCE_COMMAND;
-    com->u.command[0] = make_command(beg, optPtr - 1);
-    com->u.command[1] = make_command(optPtr + 1, end);
+    com->u.command[0] = make_command(beg, optPtr - 1, line_num);
+    com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == ')')
   {
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
     while (*open != '(') ++open;
-    com->u.subshell_command = make_command(open + 1, optPtr - 1);
+    com->u.subshell_command = make_command(open + 1, optPtr - 1, line_num);
   }
   else if (*optPtr == '|' && *(optPtr-1) != '|')
   {
     com->type = PIPE_COMMAND;
-    com->u.command[0] = make_command(beg, optPtr - 1);
-    com->u.command[1] = make_command(optPtr + 1, end);
+    com->u.command[0] = make_command(beg, optPtr - 1, line_num);
+    com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == '|')
   {
     com->type = OR_COMMAND;
-    com->u.command[0] = make_command(beg, optPtr - 2);
-    com->u.command[1] = make_command(optPtr + 1, end);
+    com->u.command[0] = make_command(beg, optPtr - 2, line_num);
+    com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == '&')
   {
     com->type = AND_COMMAND;
-    com->u.command[0] = make_command(beg, optPtr - 2);
-    com->u.command[1] = make_command(optPtr + 1, end);
+    com->u.command[0] = make_command(beg, optPtr - 2, line_num);
+    com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   
   return com;
@@ -296,7 +311,7 @@ make_command_stream (int (*get_next_byte) (void *),
       b = a;
       while (*b != '\n') ++b;
       char* line = copy(a, b);
-      push(stream, make_command(line, line + (int)strlen(line)));
+      push(stream, make_command(line, line + (int)strlen(line), i+1));
       a = ++b;
   }
   
