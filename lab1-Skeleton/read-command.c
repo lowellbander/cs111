@@ -11,7 +11,6 @@
 #include <error.h>
 
 typedef struct node *node_t;
-typedef struct line *line_t;
 
 struct command_stream 
 { 
@@ -22,12 +21,6 @@ struct node
 {
   command_t self;
   node_t next;
-};
-
-struct line 
-{
-  char* body;
-  int num;
 };
 
 /* Checks to see that a character in the input stream is valid */
