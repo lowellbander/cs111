@@ -3,16 +3,17 @@
 
 /* TODO:comments
         syntax checker
-        make_command_stream --> recognize separate commands 
         deal with new line counts, passing it back up tree for syntax errors
-        read_command --> trivial, but make commands a linked list
+        read_command
+        input/output
         
 */ 
 
 
-/*For Nicole: change make_command's arguments to include line number
+/*Nicole: change make_command's arguments to include line number
               command stream
                 --can simple commands ever have new lines? what about after +?
+                --can simple commands start/end with non alpha/digit?
                 --check for semicolons at the end of simple command
               read command stream --- infinitely loops still
   
@@ -98,6 +99,9 @@ char* buildString(int (*get_next_byte) (void *),
       ++i;
     }
   //Null terminate string
+  size = 1;
+  if (strlen(string) >= size) 
+    string = checked_grow_alloc(string, &size);
   string[i] = '\0';
   return string;
 }
@@ -109,8 +113,11 @@ char* get_opt_ptr(char* beg, char* end)
   char* ptr = end;
 
   // begin syntax checking
+  // TODO: Check for < < < or > > > or > > or < < or < + or + <
+  bool foundNonWhite = false;
   while(ptr != beg)
   {
+    // Checking for <<<
     if (*ptr == '<')
       if (--ptr != beg && *ptr == '<')
         if (--ptr != beg && *ptr == '<')
@@ -118,12 +125,13 @@ char* get_opt_ptr(char* beg, char* end)
     --ptr;
   }
   ptr = end;
+  // Checking for >>>
   while(ptr != beg)
   {
     if (*ptr == '>')
       if (--ptr != beg && *ptr == '>')
         if (--ptr != beg && *ptr == '>')
-          error (1, 0, "invalid syntax: >>>n");
+          error (1, 0, "invalid syntax: >>>\n");
     --ptr;
   }
   ptr = end;
@@ -132,8 +140,23 @@ char* get_opt_ptr(char* beg, char* end)
   // Scan for sequence command
   while(ptr != beg)
   {
-    if (*ptr == ';')
+    printf("found: <%c>\n", *ptr);
+    // Checking for sequence command or end of complete command
+    if (!foundNonWhite && *ptr != '\n' 
+                       && *ptr != '\t' 
+                       && *ptr != '\n' 
+                       && *ptr != EOF 
+                       && *ptr != '\0' 
+                       && *ptr != ';')
+    {
+      foundNonWhite = true;
+      printf("Found non white is true\n");
+    }
+    if (foundNonWhite && *ptr == ';')
+    {
+      printf("It's a sequence command for sure!\n");
       goto done;
+    }
     --ptr;
   }
   ptr = end;
@@ -201,15 +224,20 @@ make_command (char* beg, char* end)
     //TODO: Check for ; at the end of simple command
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
-    char* word = malloc(sizeof(char)*(end-beg));
+    char* word = malloc(sizeof(char)*(end-beg+1));
     char* ptr = beg;
     int i = 0;
     int line = 0;
     bool foundSpace = false;
 
+    // Syntax checking for simple command
+    if (!isalpha(*beg) && !isdigit(*beg) && *beg != ' ' && *beg != '\t' && *beg != '\n')
+      error(1, 0, "Syntax error: Line: %d, simple command cannot start with <%c>\n", line, *beg);
+
+    // Create simple command, skipping over white space
     for (; ptr != end; ++ptr) 
     {  
-      // Check if newline
+      // Check if newline (should never go here)
       if (*ptr == '\n')
       {
         ++line;
@@ -240,18 +268,24 @@ make_command (char* beg, char* end)
         }
       }
     }
+    word[i] = '\0';
+    // Syntax check for end semi colon and get rid of it
+    if (word[i-1] == ';')
+      word[i-1] = '\0';
     *(com->u.word) = word;
-    printf("printing from make_command: ");
+    printf("Making simple command: ");
     puts(word);
   }
   else if (*optPtr == ';')
   {
+    printf("Making sequence command\n");
     com->type = SEQUENCE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1);
     com->u.command[1] = make_command(optPtr + 1, end);
   }
   else if (*optPtr == ')')
   {
+    printf("Making subshell command\n");
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
     while (*open != '(') ++open;
@@ -259,18 +293,21 @@ make_command (char* beg, char* end)
   }
   else if (*optPtr == '|' && *(optPtr-1) != '|')
   {
+    printf("Making pipe command\n");
     com->type = PIPE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1);
     com->u.command[1] = make_command(optPtr + 1, end);
   }
   else if (*optPtr == '|')
   {
+    printf("Making OR command\n");
     com->type = OR_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 2);
     com->u.command[1] = make_command(optPtr + 1, end);
   }
   else if (*optPtr == '&')
   {
+    printf("Making AND command\n");
     com->type = AND_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 2);
     com->u.command[1] = make_command(optPtr + 1, end);
@@ -344,7 +381,10 @@ make_command_stream (int (*get_next_byte) (void *),
   }
   //Check to see if whole script was one command or if there are any remaining commands left
   if (!foundHead)
+  {
+    printf("Never found head, making command.\n");
     currStream->command = make_command(beg, end);
+  }
   else if (foundCmdBeg)
   {
     printf("Making last command\n");
@@ -370,7 +410,7 @@ command_t
 read_command_stream (command_stream_t s)
 {
   printf("entering read command\n");
-  //s = s->next
+  //s = s->next;
   if (s == NULL)
     printf("Stream is indeedy NULL\n");
   else
@@ -380,14 +420,19 @@ read_command_stream (command_stream_t s)
   else
     printf("oh crapola\n");
 
-  
-  command_t com = s->command;
+  command_t com = checked_malloc(sizeof(struct command));
+  com = s->command;
   if (s == NULL)
     return NULL;
-  else if (s->next == NULL)
-    s = NULL;
   else
+  {
+    printf("Moving on to next\n");
+    printf("s: %p\n", s);
+    printf("n: %p\n", s->next);
     s = s->next;
+    //printf("nexts: %p\n", s);
+    //printf("nextn: %p\n", s->next);
+  }
   return com;
 }
 
