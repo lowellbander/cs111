@@ -1,20 +1,22 @@
 // UCLA CS 111 Lab 1 command reading
 
 
-/* TODO:comments
-        syntax checker
-        deal with new line counts, passing it back up tree for syntax errors
-        read_command
-        input/output
+/* TODO:syntax checker
+           -- multiple <<< >>> --- also include < < <, etc.
+        deal with new line counts, 
+              passing it back up tree for syntax errors, perhaps pass by a pair struct
+        read_command -- infinitely loops
+        insert char* input/output of simple command
+        fix nested subshell
         
 */ 
 
 
-/*Nicole: change make_command's arguments to include line number
+/*Nicole's train of thought: 
+              change make_command's arguments to include line number
               command stream
-                --can simple commands ever have new lines? what about after +?
+                --can simple commands ever have new lines?
                 --can simple commands start/end with non alpha/digit?
-                --check for semicolons at the end of simple command
               read command stream --- infinitely loops still
             nested subshell
   
@@ -118,7 +120,7 @@ char* get_opt_ptr(char* beg, char* end)
   char* ptr = end;
 
   // begin syntax checking
-  // TODO: Check for < < < or > > > or > > or < < or < + or + <
+  // TODO: Check for < < < or > > > or > > or < <
   bool foundNonWhite = false;
   while(ptr != beg)
   {
@@ -209,6 +211,8 @@ make_command (char* beg, char* end)
   char* optPtr = get_opt_ptr(beg, end);
   command_t com = checked_malloc(sizeof(struct command));
   
+  int line = 0;
+  
   /* OPERATOR PRECEDENCE
    * (highest)
    * ;
@@ -230,11 +234,10 @@ make_command (char* beg, char* end)
     char* word = malloc(sizeof(char)*(end-beg+1));
     char* ptr = beg;
     int i = 0;
-    int line = 0;
     // Consecutive white spaces
     int consecSpace = 0;;
     bool foundBegWord = false;
-
+    printf("end in making Simple command: <%c>\n", *end);
     for (; ptr != end; ++ptr) 
     {  
       //Find start of simple command
@@ -258,8 +261,9 @@ make_command (char* beg, char* end)
       // Skip over extra white spaces/tabs
       else
       { 
-        if (consecSpace == 0 || (*ptr != ' ' && *ptr != '\t'))
+        if (consecSpace <= 1 || (*ptr != ' ' && *ptr != '\t'))
         {
+          printf("word[%d]: <%c>\n", i, *ptr);
           word[i] = *ptr;
           ++i;
         }
@@ -272,7 +276,10 @@ make_command (char* beg, char* end)
     word[i] = '\0';
     // Syntax check for end semi colon and get rid of it
     if (word[i-1] == ';')
+    {
+      printf("got rid of ;\n");
       word[i-1] = '\0';
+    }
     *(com->u.word) = word;
     printf("Made simple command: ");
     puts(word);
@@ -291,7 +298,13 @@ make_command (char* beg, char* end)
     printf("Making subshell command\n");
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
-    while (*open != '(') ++open;
+    while (*open != '(')
+    {
+      // Syntax check for matching parens
+      if (optPtr == open)
+        error(1, 0, "Syntax error: Line %d, mismatched parentheses\n", line);
+      ++open;
+    }
     com->u.subshell_command = make_command(open + 1, optPtr - 1);
   }
   // Begin making pipe command
@@ -386,7 +399,7 @@ make_command_stream (int (*get_next_byte) (void *),
     // Found new line to signal end of command 
     else if (!foundOperator && cmdSize > 0 && (string[i] == '\n' || string[i] == '#'))
     {
-      printf("Trying to make command\n");
+      printf("Trying to make command in make_command_stream\n");
       // If found head, create another one in list to fill in
       if (foundHead)
       {
