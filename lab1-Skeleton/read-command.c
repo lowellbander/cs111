@@ -23,16 +23,6 @@ struct node
   node_t next;
 };
 
-char *join(const char* s1, const char* s2)
-{
-    char* result = checked_malloc(strlen(s1) + strlen(s2) + 1);
-
-    strcpy(result, s1);
-    strcat(result, s2);
-
-    return result;
-}
-
 /* Checks to see that a character in the input stream is valid */
 void validate(char* string, int line_num) {
   //TODO: finish implementation
@@ -84,19 +74,16 @@ char* buildString(int (*get_next_byte) (void *),
   int i = 0;
 
   char c  = get_next_byte(get_next_byte_argument);
-  //validate(c);
 
   while (c != EOF)
-    {
-      //validate(c);
+  {
+    if (strlen(string) >= size) 
+      string = checked_grow_alloc(string, &size);
 
-      if (strlen(string) >= size) 
-        string = checked_grow_alloc(string, &size);
-
-      string[i] = c;
-      c  = get_next_byte(get_next_byte_argument);
-      ++i;
-    }
+    string[i] = c;
+    c  = get_next_byte(get_next_byte_argument);
+    ++i;
+  }
 
   return string;
 }
