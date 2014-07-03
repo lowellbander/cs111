@@ -16,6 +16,7 @@
                 --can simple commands start/end with non alpha/digit?
                 --check for semicolons at the end of simple command
               read command stream --- infinitely loops still
+            nested subshell
   
 */
 
@@ -60,6 +61,7 @@ void validate(char c) {
       c == '(' ||
       c == ')' ||
       c == ' ' ||
+      c == '#' ||
       c == '\n' ||
       c == '\t')
       return;
@@ -223,7 +225,6 @@ make_command (char* beg, char* end)
   {
     // check to see that operators have operands
 
-    //TODO: Check for ; at the end of simple command
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = malloc(sizeof(char)*(end-beg+1));
@@ -234,14 +235,20 @@ make_command (char* beg, char* end)
     int consecSpace = 0;;
     bool foundBegWord = false;
 
-    // Create simple command, skipping over white space
     for (; ptr != end; ++ptr) 
     {  
       //Find start of simple command
       if (!foundBegWord && *ptr != ' ' && *ptr != '\t')
       {
         // Syntax checking for simple command -- check it starts with digit/alpha
-        if (!isalpha(*beg) && !isdigit(*beg) && *beg != ' ' && *beg != '\t' && *beg != '\n')
+        if ((*beg == '|' || 
+             *beg == '&' || 
+             *beg == ';' || 
+             *beg == ')' || 
+             *beg == '(' || 
+             *beg == '<' || 
+             *beg == '>')
+              && *beg != ' ' && *beg != '\t' && *beg != '\n')
           error(1, 0, "Syntax error: Line: %d, simple command cannot start with <%c>\n", line, *beg);
         word[i] = *ptr;
         ++i;
@@ -329,6 +336,7 @@ make_command_stream (int (*get_next_byte) (void *),
   char* beg = string;
   int stringSize = strlen(string);
   char* end = string + stringSize;
+  int line = 0;
 
   // begin find separate complete commands
 
@@ -338,29 +346,50 @@ make_command_stream (int (*get_next_byte) (void *),
   int cmdSize = 0;
   // Keep track if head command was found
   bool foundHead = false;
+  bool foundComment = false;
   int i = 0;
-  printf("Size: %d\n", stringSize);
+
   for (i = 0; i <= stringSize; ++i)
   { 
-    printf("i: %d, string[%d]: <%c>\n", i, i, string[i]);
-    if (cmdSize > 0) printf("Found cmd beg\n");
-    if (foundHead) printf("Found head\n");
-    if (foundOperator) printf("Found op\n");
+    // Found Comment
+    if (string[i] == '#')
+    {
+      printf("Found comment at %i\n", i);
+      // If # not first character
+      if (i > 0)
+      {
+        int x = i-1;
+        if (isalpha(string[x]) || isdigit(string[x]) ||
+            string[x] == '!' ||
+            string[x] == '%' ||
+            string[x] == '+' ||
+            string[x] == ',' ||
+            string[x] == '-' ||
+            string[x] == '.' ||
+            string[x] == '/' ||
+            string[x] == ':' ||
+            string[x] == '@' ||
+            string[x] == '^' ||
+            string[x] == '_')
+          error(1, 0, "Syntax error: Line: %d, %c immediately preceded comment\n", line, string[x]); 
+        else
+          foundComment = true;
+      }
+    }
     // Check for operator waiting for operand
-    if (string[i] == '|' || string[i] == '&' || string[i] == '(')
+    if (!foundComment && (string[i] == '|' || string[i] == '&' || string[i] == '('))
     {
       if (string[i] == '(')
         cmdSize += 1;
       foundOperator = true;
     }
     // Found new line to signal end of command 
-    else if (!foundOperator && cmdSize > 0 && string[i] == '\n')
+    else if (!foundOperator && cmdSize > 0 && (string[i] == '\n' || string[i] == '#'))
     {
       printf("Trying to make command\n");
       // If found head, create another one in list to fill in
       if (foundHead)
       {
-        printf("Found head and making a command\n");
         // Create another one in list and point to next one in stream
         command_stream_t nextStream = checked_malloc(sizeof(struct command_stream));
         currStream->next = nextStream;
@@ -370,7 +399,9 @@ make_command_stream (int (*get_next_byte) (void *),
         currStream = nextStream;
       }
       else
+      {
         currStream->command = make_command(beg, &string[i]);
+      }
       beg = &string[i];
       cmdSize = 0;
       foundHead = true;
@@ -378,7 +409,7 @@ make_command_stream (int (*get_next_byte) (void *),
     // If found operator, check if whitespace or operand
     else if (foundOperator && string[i] != ' ' && string[i] != '\n' && string[i] != '\t')
       foundOperator = false;
-    else if (string[i] != ' ' && string[i] != '\n' && string[i] != '\t')
+    else if (string[i] != ' ' && string[i] != '\n' && string[i] != '\t' && !foundComment)
     {
       // Found beginning of command
       if (cmdSize == 0)
@@ -386,8 +417,13 @@ make_command_stream (int (*get_next_byte) (void *),
 
       cmdSize += 1;
     }
+    else if (foundComment && string[i] == '\n')
+      foundComment = false;
   }
-  //Check to see if whole script was one command or if there are any remaining commands left
+  // Check if second operand
+  if (foundOperator && cmdSize == 0)
+    error(1, 0, "Syntax error: Line: %d, no second operand\n", line);
+  // Check to see if whole script was one command or if there are any remaining commands left
   if (!foundHead)
   {
     printf("Never found head, making command.\n");
