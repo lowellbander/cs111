@@ -10,10 +10,17 @@
 #include <ctype.h>
 #include <error.h>
 
+typedef struct node *node_t;
+
 struct command_stream 
 { 
-  command_t head; 
-  command_t curr;
+  node_t curr;
+};
+
+struct node
+{
+  command_t self;
+  node_t next;
 };
 
 /* Checks to see that a character in the input stream is valid */
@@ -233,10 +240,13 @@ make_command_stream (int (*get_next_byte) (void *),
 
   command_t com = make_command(string, end);
 
+  node_t node = checked_malloc(sizeof(struct node));
+  node->self = com;
+  node->next = NULL;
+
   command_stream_t stream = checked_malloc(sizeof(struct command_stream));
 
-  stream->head = com;
-  stream->curr = com;
+  stream->curr = node;
   
   return stream;
 }
@@ -244,8 +254,13 @@ make_command_stream (int (*get_next_byte) (void *),
 command_t
 read_command_stream (command_stream_t s)
 {
-  command_t com = s->curr;
-  s->curr = NULL;
-  return com;
+  if (s->curr == NULL)
+    return NULL;
+  else 
+    {
+      command_t com = s->curr->self;
+      s->curr = s->curr->next;
+      return com;
+    }
 }
 
