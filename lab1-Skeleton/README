@@ -1,6 +1,5 @@
-Lowell Bander
-Nicole Yee
-This is a skeleton for CS 111 Lab 1.
+Lowell Bander, UID 204 156 534
+Nicole Yee, UID 403 796 037
 
-Replace this README file with notes on your implementation.
-Mentions any special features or limitations.
+Our code improperly handles nested subshell commands in some cases, doesn't trim
+whitespace properly, and ignores the i/o attributes of the command struct.
