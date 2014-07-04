@@ -89,12 +89,10 @@ void validate(char* string, int line_num) {
     }
   }
 
-  bool left, right;
   //check that all operators have operands
   for (i = 0; i < len; ++i)
   {
-    left = false;
-    right = false;
+    bool left = false;
     char c = string[i];
     if (isOperator(c))
     {
@@ -115,9 +113,34 @@ void validate(char* string, int line_num) {
         }
       }
 
-      //right
-
       if (!left) error(1, 0, "missing operand for %c on line %i\n", 
+                                                    c, line_num);
+    }
+  }
+  for (i = len-1; i > -1; --i)
+  {
+    bool right = false;
+    char c = string[i];
+    if (isOperator(c))
+    {
+      //check that it has left and right operands
+      int j;
+      //left
+      for (j = i + 1; j < len; ++j)
+      {
+        if (isOperand(string[j])) 
+        {
+          right = true;
+          break;
+        }
+        if (isOperator(string[j]))
+        {
+          right = false;
+          break;
+        }
+      }
+
+      if (!right) error(1, 0, "missing operand for %c on line %i\n", 
                                                     c, line_num);
     }
   }
