@@ -249,7 +249,7 @@ make_command (char* beg, char* end, int line_num)
 
 int line_nums(char* beg, char* end)
 {
-  int nLines = 0;
+  int nLines = 1;
   char* ptr = beg;
   while (ptr != end)
   {
@@ -303,7 +303,8 @@ make_command_stream (int (*get_next_byte) (void *),
   char* end = string + strlen(string) - 2;
   
   int nLines = line_nums(string, end);
-  if (nLines == 0) nLines = 1;
+  //if (nLines == 0) nLines = 1;
+  printf("nLines: %i\n", nLines);
   int i;
   char* a = string;
   char* b;
