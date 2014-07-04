@@ -56,7 +56,6 @@ bool isOperand(char c)
 
 /* Checks to see that a character in the input stream is valid */
 void validate(char* string, int line_num) {
-  //TODO: finish implementation
   int i;
   int len = strlen(string);
   
@@ -75,7 +74,7 @@ void validate(char* string, int line_num) {
     char op = ops[i];
     char* ptr;
     const char* end = string + len;
-    for (ptr = string; ptr != end; ++ptr)
+    for (ptr = string; ptr < end; ++ptr)
     {
       if (*ptr == op)
         if (++ptr != end && *ptr == op)
@@ -90,9 +89,6 @@ void validate(char* string, int line_num) {
     }
   }
 
-  //TODO: deprecate
-  if (len == 0) error(1, 0, "not enough operands on line %i\n", line_num);
-  
   bool left, right;
   //check that all operators have operands
   for (i = 0; i < len; ++i)
