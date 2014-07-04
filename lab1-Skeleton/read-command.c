@@ -89,7 +89,7 @@ void validate(char* string, int line_num) {
         }
     }
   }
-/*
+
   //TODO: deprecate
   if (len == 0) error(1, 0, "not enough operands on line %i\n", line_num);
   
@@ -114,15 +114,17 @@ void validate(char* string, int line_num) {
         }
         if (isOperator(string[j]))
         {
-          if (string[j] != )
+          left = false;
+          break;
         }
       }
 
       //right
 
-      //check for &&& ||| <<< >>> ;;
+      if (!left) error(1, 0, "missing operand for %c on line %i\n", 
+                                                    c, line_num);
     }
-  }*/
+  }
 
 };
 
