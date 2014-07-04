@@ -273,9 +273,14 @@ make_command (char* beg, char* end, int line_num)
     char* word = malloc(sizeof(char)*(end-beg));
     char* ptr = beg;
     int i = 0;
+    bool foundBeg = false;
     for (; ptr != end + 1; ++ptr, ++i) 
     {
-      word[i] = *ptr;
+      // Skip leading white spaces
+      if (*ptr != ' ' && *ptr != '\t')
+        foundBeg = true;
+      if (foundBeg)
+        word[i] = *ptr;
     }
     //validate(word, line_num);
     *(com->u.word) = word;
