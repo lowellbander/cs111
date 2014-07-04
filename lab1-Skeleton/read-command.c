@@ -40,7 +40,8 @@ void validate(char* string, int line_num) {
   for (i = 0; i < len; ++i)
   {
     char c = string[i];
-    if (isalpha(c) || 
+    if (isOperator(c) ||
+        isalpha(c) || 
         isdigit(c) ||
         c == '!' ||
         c == '%' ||
@@ -53,11 +54,6 @@ void validate(char* string, int line_num) {
         c == '@' ||
         c == '^' ||
         c == '_' ||
-        c == '<' ||
-        c == '>' ||
-        c == '|' ||
-        c == ';' ||
-        c == '&' ||
         c == '\n' ||
         c == ' ')
         continue;
@@ -100,7 +96,6 @@ char* buildString(int (*get_next_byte) (void *),
 char* get_opt_ptr(char* beg, char* end)
 {
   char* ptr = end;
-  //printf("beg: <%c>, end: <%c>\n", *beg, *end);
 
   // begin syntax checking
   while(ptr != beg)
