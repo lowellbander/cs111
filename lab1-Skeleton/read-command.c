@@ -23,11 +23,21 @@ struct node
   node_t next;
 };
 
+bool isOperator(char c)
+{
+  if (c == '|' || c == '&' || c == ';' || c == '<' || c == '>')
+    return true;
+  else
+    return false;
+}
+
+
 /* Checks to see that a character in the input stream is valid */
 void validate(char* string, int line_num) {
   //TODO: finish implementation
   int i;
   int len = strlen(string);
+  if (len == 0) error(1, 0, "not enough operands on line %i\n", line_num);
   for (i = 0; i < len; ++i)
   {
     char c = string[i];
@@ -92,7 +102,7 @@ char* buildString(int (*get_next_byte) (void *),
 char* get_opt_ptr(char* beg, char* end)
 {
   char* ptr = end;
-
+  //printf("beg: <%c>, end: <%c>\n", *beg, *end);
   // begin syntax checking
   //while(ptr != beg)
   //{
@@ -184,7 +194,7 @@ command_t
 make_command (char* beg, char* end, int line_num)
 {
   char* optPtr = get_opt_ptr(beg, end);
-  check_syntax(beg, end, optPtr);
+  //check_syntax(beg, end, optPtr);
   command_t com = checked_malloc(sizeof(struct command));
   
   /* OPERATOR PRECEDENCE
@@ -201,6 +211,9 @@ make_command (char* beg, char* end, int line_num)
   if (optPtr == beg)
   {
     // check to see that operators have operands
+    if (isOperator(*optPtr)) 
+      error(1, 0, "too few operands on line %i\n", line_num);
+
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = malloc(sizeof(char)*(end-beg));
@@ -213,7 +226,10 @@ make_command (char* beg, char* end, int line_num)
       if (*ptr != ' ' && *ptr != '\t')
         foundBeg = true;
       if (foundBeg)
+      {
         word[i] = *ptr;
+        ++i;
+      }
     }
     validate(word, line_num);
     *(com->u.word) = word;
@@ -228,7 +244,12 @@ make_command (char* beg, char* end, int line_num)
   {
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
-    while (*open != '(') ++open;
+    while (*open != '(') 
+    {
+      if (open == beg)
+        error(1, 0, "unmatched parenthesis on line %i\n", line_num);
+      ++open;
+    }
     com->u.subshell_command = make_command(open + 1, optPtr - 1, line_num);
   }
   else if (*optPtr == '|' && *(optPtr-1) != '|')
@@ -255,7 +276,7 @@ make_command (char* beg, char* end, int line_num)
 
 int line_nums(char* beg, char* end)
 {
-  int nLines = 0;
+  int nLines = 1;
   char* ptr = beg;
   while (ptr != end)
   {
