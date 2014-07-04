@@ -33,7 +33,9 @@ bool isOperator(char c)
 
 bool isSpecial(char c) 
 {
-  if (c == '!' ||
+  if (c == '(' ||
+      c == ')' ||
+      c == '!' ||
       c == '%' ||
       c == '+' ||
       c == ',' ||
@@ -58,6 +60,15 @@ bool isOperand(char c)
 void validate(char* string, int line_num) {
   int i;
   int len = strlen(string);
+  
+  int balance = 0;
+  for (i = 0; i < len; ++i)
+  {
+    if (string[i] == ')') ++balance;
+    if (string[i] == '(') --balance;
+  }
+  if (balance != 0)
+    error(1, 0, "unmatched parenthesis on line %i\n", line_num);
   
   //check for invalid characters
   for (i = 0; i < len; ++i)
@@ -271,12 +282,7 @@ make_command (char* beg, char* end, int line_num)
   {
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
-    while (*open != '(') 
-    {
-      if (open == beg)
-        error(1, 0, "unmatched parenthesis on line %i\n", line_num);
-      ++open;
-    }
+    while (*open != '(') ++open;
     com->u.subshell_command = make_command(open + 1, optPtr - 1, line_num);
   }
   else if (*optPtr == '|' && *(optPtr-1) != '|')
