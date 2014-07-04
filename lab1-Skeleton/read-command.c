@@ -31,38 +31,94 @@ bool isOperator(char c)
     return false;
 }
 
+bool isSpecial(char c) 
+{
+  if (c == '!' ||
+      c == '%' ||
+      c == '+' ||
+      c == ',' ||
+      c == '-' ||
+      c == '.' ||
+      c == '/' ||
+      c == ':' ||
+      c == '@' ||
+      c == '^' ||
+      c == '_' )
+      return true;
+    else return false;
+}
+
+bool isOperand(char c) 
+{
+  if (isalpha(c) || isdigit(c) || isSpecial(c)) return true;
+  else return false;
+}
+
 /* Checks to see that a character in the input stream is valid */
 void validate(char* string, int line_num) {
   //TODO: finish implementation
   int i;
   int len = strlen(string);
-  if (len == 0) error(1, 0, "not enough operands on line %i\n", line_num);
+  
+  //check for invalid characters
   for (i = 0; i < len; ++i)
   {
     char c = string[i];
-    if (isOperator(c) ||
-        isalpha(c) || 
-        isdigit(c) ||
-        c == '!' ||
-        c == '%' ||
-        c == '+' ||
-        c == ',' ||
-        c == '-' ||
-        c == '.' ||
-        c == '/' ||
-        c == ':' ||
-        c == '@' ||
-        c == '^' ||
-        c == '_' ||
-        c == '\n' ||
-        c == ' ')
-        continue;
-      else
-      {
-        error(1, 0, "invalid character on line %i: %c", line_num, c);
-        return;
-      }
+    if (isOperator(c) || isOperand(c) || c == ' ' || c == '\t') continue;
+    else error(1, 0, "invalid character on line %i: %c", line_num, c);
   }
+
+  //check for double/triple operators
+  char* ops = "<>|&";
+  for (i = 0; i < 4; ++i)
+  {
+    char op = ops[i];
+    char* ptr;
+    //make const
+    char* end = string + len;
+    for (ptr = string; ptr != end; ++ptr)
+    {
+      if (*ptr == op)
+        if (++ptr != end && *ptr == op)
+          if (++ptr != end && *ptr == op)
+            error(1, 0, "invalid sequence on line %i: %c%c%c\n", 99, op, op, op);
+    }
+  }
+/*
+  //TODO: deprecate
+  if (len == 0) error(1, 0, "not enough operands on line %i\n", line_num);
+  
+  bool left, right;
+  //check that all operators have operands
+  for (i = 0; i < len; ++i)
+  {
+    left = false;
+    right = false;
+    char c = string[i];
+    if (isOperator(c))
+    {
+      //check that it has left and right operands
+      int j;
+      //left
+      for (j = i - 1; j != -1; --j)
+      {
+        if (isOperand(string[j])) 
+        {
+          left = true;
+          break;
+        }
+        if (isOperator(string[j]))
+        {
+          if (string[j] != )
+        }
+      }
+
+      //right
+
+      //check for &&& ||| <<< >>> ;;
+    }
+  }*/
+
 };
 
 /* Builds a string from file stream */
@@ -98,6 +154,7 @@ char* get_opt_ptr(char* beg, char* end)
   char* ptr = end;
 
   // begin syntax checking
+  /*
   while(ptr != beg)
   {
     if (*ptr == '<')
@@ -134,6 +191,7 @@ char* get_opt_ptr(char* beg, char* end)
     --ptr;
   }
   ptr = end;
+  */
   // end syntax checking
 
   while(ptr != beg)
@@ -206,7 +264,7 @@ make_command (char* beg, char* end, int line_num)
   //Check command type
   if (optPtr == beg)
   {
-    // check to see that operators have operands
+    //TODO: deprecate
     if (isOperator(*optPtr)) 
       error(1, 0, "too few operands on line %i\n", line_num);
 
@@ -219,7 +277,7 @@ make_command (char* beg, char* end, int line_num)
     {
       word[i] = *ptr;
     }
-    validate(word, line_num);
+    //validate(word, line_num);
     *(com->u.word) = word;
   }
   else if (*optPtr == ';')
@@ -327,6 +385,7 @@ make_command_stream (int (*get_next_byte) (void *),
       b = a;
       while (*b != '\n') ++b;
       char* line = copy(a, b);
+      validate(line, i+1);
       push(stream, make_command(line, line + (int)strlen(line), i+1));
       a = ++b;
   }
