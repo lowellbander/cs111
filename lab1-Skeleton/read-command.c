@@ -23,20 +23,11 @@ struct node
   node_t next;
 };
 
-bool isOperator(char c)
-{
-  if (c == '|' || c == '&' || c == ';' || c == '<' || c == '>')
-    return true;
-  else
-    return false;
-}
-
 /* Checks to see that a character in the input stream is valid */
 void validate(char* string, int line_num) {
   //TODO: finish implementation
   int i;
   int len = strlen(string);
-  if (len == 0) error(1, 0, "not enough operands on line %i\n", line_num);
   for (i = 0; i < len; ++i)
   {
     char c = string[i];
@@ -59,6 +50,8 @@ void validate(char* string, int line_num) {
         c == ';' ||
         c == '&' ||
         c == '\n' ||
+        c == '(' ||
+        c == ')' ||
         c == ' ')
         continue;
       else
@@ -91,7 +84,6 @@ char* buildString(int (*get_next_byte) (void *),
     c  = get_next_byte(get_next_byte_argument);
     ++i;
   }
-
   return string;
 }
 
@@ -100,7 +92,6 @@ char* buildString(int (*get_next_byte) (void *),
 char* get_opt_ptr(char* beg, char* end)
 {
   char* ptr = end;
-  //printf("beg: <%c>, end: <%c>\n", *beg, *end);
 
   // begin syntax checking
   //while(ptr != beg)
@@ -123,25 +114,39 @@ char* get_opt_ptr(char* beg, char* end)
   //ptr = end;
   // end syntax checking
 
+  // Scan for sequence command
   while(ptr != beg)
-  {
-    if (*ptr == ';')
+  { 
+    bool foundNonWhite = false;
+    // Checking for sequence command or end of complete command
+    if (!foundNonWhite && *ptr != '\n' 
+                       && *ptr != '\t' 
+                       && *ptr != '\n' 
+                       && *ptr != EOF 
+                       && *ptr != '\0' 
+                       && *ptr != ';')
+    {
+      foundNonWhite = true;
+    }
+    if (foundNonWhite && *ptr == ';')
       goto done;
     --ptr;
   }
   ptr = end;
+  // Scan for subshell command
   while(ptr != beg)
   {
     if (*ptr == ')')
       goto done;
     --ptr;
   }
+  // Scan for pipe command
   ptr = end;
   while(ptr != beg)
   { 
     if (*ptr == '|')
     {
-      //Check if OR
+      //Check if pipe
       if(*(ptr-1) != '|')
         goto done;
       ptr--;
@@ -149,6 +154,7 @@ char* get_opt_ptr(char* beg, char* end)
     --ptr;
   }
   ptr = end;
+  // Scan for AND command
   while(ptr != beg)
   {
     if (*ptr == '&')
@@ -156,6 +162,7 @@ char* get_opt_ptr(char* beg, char* end)
     --ptr;
   }
   ptr = end;
+  // Scan for OR command
   while(ptr != beg)
   {
     if (*ptr == '|')
@@ -177,7 +184,7 @@ command_t
 make_command (char* beg, char* end, int line_num)
 {
   char* optPtr = get_opt_ptr(beg, end);
-  //check_syntax(beg, end, optPtr);
+  check_syntax(beg, end, optPtr);
   command_t com = checked_malloc(sizeof(struct command));
   
   /* OPERATOR PRECEDENCE
@@ -189,22 +196,24 @@ make_command (char* beg, char* end, int line_num)
    * ||
    * (lowest)
    * */
-  
+
   //Check command type
   if (optPtr == beg)
   {
     // check to see that operators have operands
-    if (isOperator(*optPtr)) 
-      error(1, 0, "too few operands on line %i\n", line_num);
-
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = malloc(sizeof(char)*(end-beg));
     char* ptr = beg;
     int i = 0;
-    for (; ptr != end + 1; ++ptr, ++i) 
+    bool foundBeg = false;
+    for (; ptr != end + 1; ++ptr) 
     {
-      word[i] = *ptr;
+      // Skip leading white spaces
+      if (*ptr != ' ' && *ptr != '\t')
+        foundBeg = true;
+      if (foundBeg)
+        word[i] = *ptr;
     }
     validate(word, line_num);
     *(com->u.word) = word;
@@ -219,12 +228,7 @@ make_command (char* beg, char* end, int line_num)
   {
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
-    while (*open != '(') 
-    {
-      if (open == beg)
-        error(1, 0, "unmatched parenthesis on line %i\n", line_num);
-      ++open;
-    }
+    while (*open != '(') ++open;
     com->u.subshell_command = make_command(open + 1, optPtr - 1, line_num);
   }
   else if (*optPtr == '|' && *(optPtr-1) != '|')
@@ -251,7 +255,7 @@ make_command (char* beg, char* end, int line_num)
 
 int line_nums(char* beg, char* end)
 {
-  int nLines = 1;
+  int nLines = 0;
   char* ptr = beg;
   while (ptr != end)
   {
@@ -305,14 +309,24 @@ make_command_stream (int (*get_next_byte) (void *),
   char* end = string + strlen(string) - 2;
   
   int nLines = line_nums(string, end);
-
+  if (nLines == 0) nLines = 1;
   int i;
   char* a = string;
   char* b;
   for (i = 0; i < nLines; ++i)
   {
       b = a;
-      while (*b != '\n') ++b;
+      if (nLines > 1)
+        while (*b != '\n') {printf("while\n");++b;}
+      else 
+      {
+        unsigned int x = 0;
+        while(x < strlen(string)) 
+        {
+          ++x;
+          ++b;
+        }
+      }
       char* line = copy(a, b);
       push(stream, make_command(line, line + (int)strlen(line), i+1));
       a = ++b;
