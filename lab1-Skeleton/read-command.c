@@ -103,24 +103,42 @@ char* get_opt_ptr(char* beg, char* end)
   //printf("beg: <%c>, end: <%c>\n", *beg, *end);
 
   // begin syntax checking
-  //while(ptr != beg)
-  //{
-  //  if (*ptr == '<')
-  //    if (--ptr != beg && *ptr == '<')
-  //      if (--ptr != beg && *ptr == '<')
-  //        error (1, 0, "invalid syntax: <<<\n");
-  //  --ptr;
-  //}
-  //ptr = end;
-  //while(ptr != beg)
-  //{
-  //  if (*ptr == '>')
-  //    if (--ptr != beg && *ptr == '>')
-  //      if (--ptr != beg && *ptr == '>')
-  //        error (1, 0, "invalid syntax: >>>n");
-  //  --ptr;
-  //}
-  //ptr = end;
+  while(ptr != beg)
+  {
+    if (*ptr == '<')
+      if (--ptr != beg && *ptr == '<')
+        if (--ptr != beg && *ptr == '<')
+          error (1, 0, "invalid syntax: <<<\n");
+    --ptr;
+  }
+  ptr = end;
+  while(ptr != beg)
+  {
+    if (*ptr == '>')
+      if (--ptr != beg && *ptr == '>')
+        if (--ptr != beg && *ptr == '>')
+          error (1, 0, "invalid syntax: >>>\n");
+    --ptr;
+  }
+  ptr = end;
+  while(ptr != beg)
+  {
+    if (*ptr == '&')
+      if (--ptr != beg && *ptr == '&')
+        if (--ptr != beg && *ptr == '&')
+          error (1, 0, "invalid syntax: &&&\n");
+    --ptr;
+  }
+  ptr = end;
+  while(ptr != beg)
+  {
+    if (*ptr == '|')
+      if (--ptr != beg && *ptr == '|')
+        if (--ptr != beg && *ptr == '|')
+          error (1, 0, "invalid syntax: |||\n");
+    --ptr;
+  }
+  ptr = end;
   // end syntax checking
 
   while(ptr != beg)
