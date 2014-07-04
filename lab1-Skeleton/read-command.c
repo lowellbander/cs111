@@ -69,20 +69,24 @@ void validate(char* string, int line_num) {
   }
 
   //check for double/triple operators
-  char* ops = "<>|&";
-  for (i = 0; i < 4; ++i)
+  char* ops = "<>|&;";
+  for (i = 0; i < (int)strlen(ops); ++i)
   {
     char op = ops[i];
     char* ptr;
-    //make const
-    char* end = string + len;
+    const char* end = string + len;
     for (ptr = string; ptr != end; ++ptr)
     {
       if (*ptr == op)
         if (++ptr != end && *ptr == op)
-          if (++ptr != end && *ptr == op)
+        {
+          if (op == ';')
             error(1, 0, "invalid sequence on line %i: %c%c%c\n", 
                                                  line_num, op, op, op);
+          else if (++ptr != end && *ptr == op)
+            error(1, 0, "invalid sequence on line %i: %c%c%c\n", 
+                                                 line_num, op, op, op);
+        }
     }
   }
 /*
@@ -197,18 +201,10 @@ char* get_opt_ptr(char* beg, char* end)
   return ptr;
 }
 
-void check_syntax(char* beg, char* end, char* optPtr)
-{
-  //if (optPtr == beg)
-  //  error (1, 0 , "bad syntax\n");
-  return;
-}
-
 command_t
 make_command (char* beg, char* end, int line_num)
 {
   char* optPtr = get_opt_ptr(beg, end);
-  //check_syntax(beg, end, optPtr);
   command_t com = checked_malloc(sizeof(struct command));
   
   /* OPERATOR PRECEDENCE
@@ -242,7 +238,6 @@ make_command (char* beg, char* end, int line_num)
       if (foundBeg)
         word[i] = *ptr;
     }
-    //validate(word, line_num);
     *(com->u.word) = word;
   }
   else if (*optPtr == ';')
