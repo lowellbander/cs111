@@ -59,8 +59,6 @@ void validate(char* string, int line_num) {
         c == ';' ||
         c == '&' ||
         c == '\n' ||
-        c == '(' ||
-        c == ')' ||
         c == ' ')
         continue;
       else
@@ -213,7 +211,6 @@ make_command (char* beg, char* end, int line_num)
   }
   else if (*optPtr == ';')
   {
-    printf("SEQ\n");
     com->type = SEQUENCE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
@@ -222,7 +219,12 @@ make_command (char* beg, char* end, int line_num)
   {
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
-    while (*open != '(') ++open;
+    while (*open != '(') 
+    {
+      if (open == beg)
+        error(1, 0, "unmatched parenthesis on line %i\n", line_num);
+      ++open;
+    }
     com->u.subshell_command = make_command(open + 1, optPtr - 1, line_num);
   }
   else if (*optPtr == '|' && *(optPtr-1) != '|')
@@ -303,8 +305,7 @@ make_command_stream (int (*get_next_byte) (void *),
   char* end = string + strlen(string) - 2;
   
   int nLines = line_nums(string, end);
-  //if (nLines == 0) nLines = 1;
-  printf("nLines: %i\n", nLines);
+
   int i;
   char* a = string;
   char* b;
