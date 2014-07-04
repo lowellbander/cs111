@@ -81,7 +81,8 @@ void validate(char* string, int line_num) {
       if (*ptr == op)
         if (++ptr != end && *ptr == op)
           if (++ptr != end && *ptr == op)
-            error(1, 0, "invalid sequence on line %i: %c%c%c\n", 99, op, op, op);
+            error(1, 0, "invalid sequence on line %i: %c%c%c\n", 
+                                                 line_num, op, op, op);
     }
   }
 /*
