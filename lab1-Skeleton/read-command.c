@@ -103,7 +103,7 @@ char* get_opt_ptr(char* beg, char* end)
     if (*ptr == '<')
       if (--ptr != beg && *ptr == '<')
         if (--ptr != beg && *ptr == '<')
-          error (1, 0, "invalid syntax: <<<\n");
+          error (1, 0, "invalid syntax on line %i: <<<\n", line_num);
     --ptr;
   }
   ptr = end;
@@ -112,7 +112,7 @@ char* get_opt_ptr(char* beg, char* end)
     if (*ptr == '>')
       if (--ptr != beg && *ptr == '>')
         if (--ptr != beg && *ptr == '>')
-          error (1, 0, "invalid syntax: >>>\n");
+          error (1, 0, "invalid syntax on line %i: >>>\n", line_num);
     --ptr;
   }
   ptr = end;
@@ -121,7 +121,7 @@ char* get_opt_ptr(char* beg, char* end)
     if (*ptr == '&')
       if (--ptr != beg && *ptr == '&')
         if (--ptr != beg && *ptr == '&')
-          error (1, 0, "invalid syntax: &&&\n");
+          error (1, 0, "invalid syntax on line %i: &&&\n", line_num);
     --ptr;
   }
   ptr = end;
@@ -130,7 +130,7 @@ char* get_opt_ptr(char* beg, char* end)
     if (*ptr == '|')
       if (--ptr != beg && *ptr == '|')
         if (--ptr != beg && *ptr == '|')
-          error (1, 0, "invalid syntax: |||\n");
+          error (1, 0, "invalid syntax on line %i: |||\n", line_num);
     --ptr;
   }
   ptr = end;
