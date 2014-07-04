@@ -154,47 +154,6 @@ char* get_opt_ptr(char* beg, char* end)
 {
   char* ptr = end;
 
-  // begin syntax checking
-  /*
-  while(ptr != beg)
-  {
-    if (*ptr == '<')
-      if (--ptr != beg && *ptr == '<')
-        if (--ptr != beg && *ptr == '<')
-          error (1, 0, "invalid syntax on line %i: <<<\n", line_num);
-    --ptr;
-  }
-  ptr = end;
-  while(ptr != beg)
-  {
-    if (*ptr == '>')
-      if (--ptr != beg && *ptr == '>')
-        if (--ptr != beg && *ptr == '>')
-          error (1, 0, "invalid syntax on line %i: >>>\n", line_num);
-    --ptr;
-  }
-  ptr = end;
-  while(ptr != beg)
-  {
-    if (*ptr == '&')
-      if (--ptr != beg && *ptr == '&')
-        if (--ptr != beg && *ptr == '&')
-          error (1, 0, "invalid syntax on line %i: &&&\n", line_num);
-    --ptr;
-  }
-  ptr = end;
-  while(ptr != beg)
-  {
-    if (*ptr == '|')
-      if (--ptr != beg && *ptr == '|')
-        if (--ptr != beg && *ptr == '|')
-          error (1, 0, "invalid syntax on line %i: |||\n", line_num);
-    --ptr;
-  }
-  ptr = end;
-  */
-  // end syntax checking
-
   while(ptr != beg)
   {
     if (*ptr == ';')
