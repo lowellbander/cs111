@@ -202,7 +202,6 @@ interrupt(registers_t *reg)
 		{
 			// Add calling process to wait queue
 			proc_array[p].p_queue = current;
-			//current->p_queue = &proc_array[p];
 			//current->p_registers.reg_eax = WAIT_TRYAGAIN;
 			current->p_state = P_BLOCKED;
 		}
