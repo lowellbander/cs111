@@ -249,8 +249,14 @@ do_fork(process_t *parent)
 	// Copy parent process's registers
 	proc_array[i].p_registers = parent->p_registers;
 	// Copy parent process's stack
+	copy_stack(&proc_array[i], parent);
 
-	return -1;
+	// sys_fork() should return 0 to child process
+	proc_array[i].p_registers.reg_eax = 0;
+	
+	// Set last process descriptor field, state
+	proc_array[i].p_state = P_RUNNABLE;
+	return i;
 }
 
 static void
@@ -308,12 +314,14 @@ copy_stack(process_t *dest, process_t *src)
 
 	// YOUR CODE HERE!
 
-	src_stack_top = 0 /* YOUR CODE HERE */;
+	src_stack_top = src->p_registers.reg_esp + PROC_STACK_SIZE;
 	src_stack_bottom = src->p_registers.reg_esp;
-	dest_stack_top = 0 /* YOUR CODE HERE */;
-	dest_stack_bottom = 0 /* YOUR CODE HERE: calculate based on the
-				 other variables */;
+	dest_stack_top = dest->p_registers.reg_esp;
+	dest_stack_bottom = dest_stack_top + src_stack_bottom - src_stack_top;
+
 	// YOUR CODE HERE: memcpy the stack and set dest->p_registers.reg_esp
+	memcpy(&dest_stack_bottom, &src_stack_top, PROC_STACK_SIZE);
+	dest->p_registers.reg_esp = dest_stack_bottom;
 }
 
 
