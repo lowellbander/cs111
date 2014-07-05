@@ -176,6 +176,8 @@ interrupt(registers_t *reg)
 		{		
 			current->p_queue->p_state = P_RUNNABLE;
 			current->p_queue->p_registers.reg_eax = current->p_exit_status;
+      // Clean old process (exercise 4)
+      current->p_state = P_EMPTY;
 		}
 		schedule();
 
@@ -196,7 +198,8 @@ interrupt(registers_t *reg)
 		else if (proc_array[p].p_state == P_ZOMBIE)
 		{
 			current->p_registers.reg_eax = proc_array[p].p_exit_status;
-			
+			// Clean old process (exercise 4)
+      proc_array[p].p_state = P_EMPTY;
 		}
 		else
 		{
