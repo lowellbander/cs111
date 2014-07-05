@@ -170,6 +170,13 @@ interrupt(registers_t *reg)
 		// for this register out of 'current->p_registers'.
 		current->p_state = P_ZOMBIE;
 		current->p_exit_status = current->p_registers.reg_eax;
+
+		// Wake processes on wait queue
+		/*if (current->p_queue != NULL) 
+		{		
+			current->p_queue->p_state = P_RUNNABLE;
+			current->p_queue->p_registers.reg_eax = current->p_exit_status;
+		}*/
 		schedule();
 
 	case INT_SYS_WAIT: {
@@ -187,9 +194,18 @@ interrupt(registers_t *reg)
 		    || proc_array[p].p_state == P_EMPTY)
 			current->p_registers.reg_eax = -1;
 		else if (proc_array[p].p_state == P_ZOMBIE)
+		{
 			current->p_registers.reg_eax = proc_array[p].p_exit_status;
+			
+		}
 		else
+		{
+			// Add calling process to wait queue
+			//proc_array[p].p_queue = current;
+			//current->p_queue = &proc_array[p];
 			current->p_registers.reg_eax = WAIT_TRYAGAIN;
+			//current->p_state = P_BLOCKED;
+		}
 		schedule();
 	}
 
@@ -256,6 +272,8 @@ do_fork(process_t *parent)
 	
 	// Set last process descriptor field, state
 	proc_array[i].p_state = P_RUNNABLE;
+
+	// Return child's process ID to parent
 	return i;
 }
 
@@ -314,13 +332,14 @@ copy_stack(process_t *dest, process_t *src)
 
 	// YOUR CODE HERE!
 
-	src_stack_top = src->p_registers.reg_esp + PROC_STACK_SIZE;
+	src_stack_top = PROC1_STACK_ADDR + PROC_STACK_SIZE*src->p_pid;
 	src_stack_bottom = src->p_registers.reg_esp;
-	dest_stack_top = dest->p_registers.reg_esp;
+	dest_stack_top = PROC1_STACK_ADDR + PROC_STACK_SIZE*dest->p_pid;
 	dest_stack_bottom = dest_stack_top + src_stack_bottom - src_stack_top;
 
+	int stack_size = src_stack_top - src_stack_bottom;
 	// YOUR CODE HERE: memcpy the stack and set dest->p_registers.reg_esp
-	memcpy(&dest_stack_bottom, &src_stack_top, PROC_STACK_SIZE);
+	memcpy((void *)dest_stack_bottom, (void *)src_stack_bottom, stack_size);
 	dest->p_registers.reg_esp = dest_stack_bottom;
 }
 
