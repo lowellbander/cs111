@@ -172,11 +172,11 @@ interrupt(registers_t *reg)
 		current->p_exit_status = current->p_registers.reg_eax;
 
 		// Wake processes on wait queue
-		/*if (current->p_queue != NULL) 
+		if (current->p_queue != NULL) 
 		{		
 			current->p_queue->p_state = P_RUNNABLE;
 			current->p_queue->p_registers.reg_eax = current->p_exit_status;
-		}*/
+		}
 		schedule();
 
 	case INT_SYS_WAIT: {
@@ -201,10 +201,10 @@ interrupt(registers_t *reg)
 		else
 		{
 			// Add calling process to wait queue
-			//proc_array[p].p_queue = current;
+			proc_array[p].p_queue = current;
 			//current->p_queue = &proc_array[p];
-			current->p_registers.reg_eax = WAIT_TRYAGAIN;
-			//current->p_state = P_BLOCKED;
+			//current->p_registers.reg_eax = WAIT_TRYAGAIN;
+			current->p_state = P_BLOCKED;
 		}
 		schedule();
 	}
@@ -274,7 +274,7 @@ do_fork(process_t *parent)
 	proc_array[i].p_state = P_RUNNABLE;
 
 	// Return child's process ID to parent
-	return i;
+	return proc_array[i].p_pid;
 }
 
 static void
