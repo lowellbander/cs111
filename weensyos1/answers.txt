@@ -1,10 +1,16 @@
-Name:
-UCLA ID:
+Name: Lowell Bander
+UCLA ID: 204 156 534
 
 
 -------------------------------------------------------------------------------
 
 Response to Exercise 1:
+
+When the process that called sys_getpid() eventually runs again, the call to
+sys_getpid() will have returned the correct value because schedule() simply
+iterates through the array of all processes, executing processes that are
+runnable. When it schedule() reaches the process that called sys_getpid(), it
+will call run() on this process, which will in turn return the correct pid.
 
 
 
