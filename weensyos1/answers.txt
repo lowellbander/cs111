@@ -1,6 +1,9 @@
 Name: Lowell Bander
 UCLA ID: 204 156 534
 
+Name: Nicole Yee
+UCLA ID: 403 796 037
+
 
 -------------------------------------------------------------------------------
 
@@ -13,6 +16,17 @@ runnable. When schedule() reaches the process that called sys_getpid(), it
 will call run() on this process, which will in turn return the correct pid.
 
 
+Response to Exercise 3:
+
+We added a wait queue to the process descriptor, namely a pointer to another
+process. Inside INT_SYS_WAIT, if the calling process (current) has not exited 
+yet, it is added to the wait queue described above by storing a pointer to the
+current process into p_queue of proc_array[p]. The calling process is then
+put to sleep, by setting the state to P_BLOCKED. In INT_SYS_EXIT, the current
+process checks to see if there is anything in the wait queue. If so, the
+queued process is woken up, by setting the status to P_RUNNABLE. The exit
+status of the current process is passed on to the queued process by being
+placed in the queued process's %eax register.
 
 Anything else you'd like us to know:
 
