@@ -259,9 +259,9 @@ do_fork(process_t *parent)
 
 	// Find empty process descriptor
 	int i = 1;
-	while (i <= 15 && proc_array[i].p_state != P_EMPTY) ++i;
+	while (i < NPROCS && proc_array[i].p_state != P_EMPTY) ++i;
 	// Check if no empty process descriptors
-  if (i == 16) return -1;
+  if (i == NPROCS) return -1;
 	
 	// Copy parent process's registers
 	proc_array[i].p_registers = parent->p_registers;
