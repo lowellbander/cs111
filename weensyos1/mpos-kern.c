@@ -154,6 +154,11 @@ interrupt(registers_t *reg)
 		current->p_registers.reg_eax = do_fork(current);
 		run(current);
 
+  case INT_SYS_NEWTHREAD:
+    // the sys_newthread system call creates a new thread-like process.
+		current->p_registers.reg_eax = do_newthread(current);
+		run(current);
+
 	case INT_SYS_YIELD:
 		// The 'sys_yield' system call asks the kernel to schedule a
 		// different process.  (MiniprocOS is cooperatively
@@ -269,6 +274,40 @@ do_fork(process_t *parent)
 	copy_stack(&proc_array[i], parent);
 
 	// sys_fork() should return 0 to child process
+	proc_array[i].p_registers.reg_eax = 0;
+	
+	// Set last process descriptor field, state
+	proc_array[i].p_state = P_RUNNABLE;
+
+	// Return child's process ID to parent
+	return proc_array[i].p_pid;
+}
+
+/*****************************************************************************
+ * do_newthread
+ *
+ *  This function creates a new process in a thread-like way.
+ *
+ *****************************************************************************/
+
+static pid_t
+do_newthread(process_t *parent)
+{
+	// Find empty process descriptor
+	int i = 1;
+	while (i < NPROCS && proc_array[i].p_state != P_EMPTY) ++i;
+	// Check if no empty process descriptors
+  if (i == NPROCS) return -1;
+	
+	// Copy parent process's registers
+	proc_array[i].p_registers = parent->p_registers;
+
+  // "Rather than starting at the same instruction as the parent, the new 
+  // thread should start by executing the start_function function: that is, 
+  // that function's address becomes the new thread's instruction pointer."
+  proc_array[i].p_registers.reg_eip = start_function;
+
+	// return 0 to child process
 	proc_array[i].p_registers.reg_eax = 0;
 	
 	// Set last process descriptor field, state
