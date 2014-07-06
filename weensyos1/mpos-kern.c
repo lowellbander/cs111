@@ -125,6 +125,7 @@ start(void)
  *****************************************************************************/
 
 static pid_t do_fork(process_t *parent);
+static pid_t do_newthread(process_t *parent);
 
 void
 interrupt(registers_t *reg)
@@ -305,7 +306,9 @@ do_newthread(process_t *parent)
   // "Rather than starting at the same instruction as the parent, the new 
   // thread should start by executing the start_function function: that is, 
   // that function's address becomes the new thread's instruction pointer."
-  proc_array[i].p_registers.reg_eip = start_function;
+
+  // start_function is passed in as %eax
+  proc_array[i].p_registers.reg_eip = parent->p_registers.reg_eax;
 
 	// return 0 to child process
 	proc_array[i].p_registers.reg_eax = 0;
