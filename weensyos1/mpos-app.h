@@ -103,6 +103,23 @@ sys_newthread(void (*start_function)(void))
 }
 
 /*****************************************************************************
+ * sys_kill
+ *
+ *   Kill the specified process.
+ *
+ *****************************************************************************/
+
+static inline void 
+sys_kill(pid_t pid)
+{
+	asm volatile("int %1\n"
+		     : 
+		     : "i" (INT_SYS_NEWTHREAD),
+           "a" (pid)
+		     : "cc", "memory");
+}
+
+/*****************************************************************************
  * sys_yield
  *
  *   Yield control of the CPU to the kernel, which will pick another
