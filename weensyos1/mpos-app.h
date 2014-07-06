@@ -79,6 +79,28 @@ sys_fork(void)
 	return result;
 }
 
+/*****************************************************************************
+ * sys_newthread
+ *
+ *   Create a new process in a thread-like way.
+ *   The new process starts with an empty stack, not a copy of the current
+ *   stack. Rather than starting at the same instruction as the parent, the new
+ *   thread starts by executing the start_function.
+ *   Returns -1 if the system call failed.
+ *
+ *****************************************************************************/
+
+static inline pid_t 
+sys_newthread(void (*start_function)(void))
+{
+	pid_t result;
+	asm volatile("int %1\n"
+		     : "=a" (result)
+		     : "i" (INT_SYS_NEWTHREAD),
+           "a" (start_function)
+		     : "cc", "memory");
+	return result;
+}
 
 /*****************************************************************************
  * sys_yield
