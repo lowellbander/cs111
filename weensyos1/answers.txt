@@ -34,7 +34,8 @@ Anything else you'd like us to know:
 
 Extra credit exercises:
 
-Code for Exercise 5:
+Response to Exercise 5:
+// the following function definition would be substituted into mpos-app.c
 
 void start(void)
 {
@@ -58,4 +59,13 @@ void start(void)
   sys_exit(0);
 }
 
+
+Response to Exercise 6:
+
+Changes were made to the following files:
+
+* mpos.h: line 13, defined new interrupt code INT_SYS_NEWTHREAD
+* mpos-app.h: lines 82-103, defined new system call sys_newthread()
+* mpos-kern.c: lines 157-160, added new case INT_SYS_NEWTHREAD
+               lines 286-318, defined new function do_newthread()
 
