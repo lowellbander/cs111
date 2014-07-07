@@ -41,17 +41,17 @@ void start(void)
 {
   int x = 0;  /* note that local variable x lives on the stack */
   
-  volatile int* i = &x; // non-volatile pointer to volatile integer
-  int* volatile j = &x; // volatile pointer to non-volatile integer
+  volatile int* adam = &x; // non-volatile pointer to volatile integer
+  int* volatile eve = &x;  // volatile pointer to non-volatile integer
   
   pid_t p = sys_fork();
   if (p == 0)
   {
-    i = &x; 
-    *i = 1; 
+    adam = &x; 
+    *adam = 1; 
     
-    j = &x; 
-    *j = 1; 
+    eve = &x; 
+    *eve = 1; 
   } 
   else if (p > 0)
     sys_wait(p); // assume blocking implementation
