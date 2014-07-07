@@ -3,6 +3,7 @@
 *.swp
 *.swo
 *.tmp
+*.~
 
 #lab 1
 timetrash
