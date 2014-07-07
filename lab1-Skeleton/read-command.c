@@ -30,7 +30,7 @@ char* copy(char* beg, char* end)
   int i;
   for (i = 0; i < size; ++i, ++beg) 
     string[i] = *beg;
-
+  puts(string);
   return string;
 }
 
@@ -71,6 +71,7 @@ bool isOperand(char c)
 void validate(char* string, int line_num) {
   int i;
   int len = strlen(string);
+  //printf("length: %d\n", len);
   
   int balance = 0;
   for (i = 0; i < len; ++i)
@@ -85,7 +86,8 @@ void validate(char* string, int line_num) {
   for (i = 0; i < len; ++i)
   {
     char c = string[i];
-    if (isOperator(c) || isOperand(c) || c == ' ' || c == '\t') continue;
+
+    if (isOperator(c) || isOperand(c) || c == ' ' || c == '\t' || c == '\n') continue;
     else error(1, 0, "invalid character on line %i: %c", line_num, c);
   }
 
@@ -297,16 +299,21 @@ make_command (char* beg, char* end, int line_num)
         break;
       }
     }
+    printf("Making simple command: <");
+    puts(word);
+    printf(">\n");
     *(com->u.word) = word;
   }
   else if (*optPtr == ';')
   {
+    //printf("Making sequence command\n");
     com->type = SEQUENCE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == ')')
   {
+    //printf("Making subshell command\n");
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
     while (*open != '(') ++open;
@@ -314,18 +321,21 @@ make_command (char* beg, char* end, int line_num)
   }
   else if (*optPtr == '|' && *(optPtr-1) != '|')
   {
+    //printf("Making pipe command\n");
     com->type = PIPE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == '|')
   {
+    //printf("Making OR command\n");
     com->type = OR_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 2, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == '&')
   {
+    //printf("Making AND command\n");
     com->type = AND_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 2, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
@@ -376,14 +386,91 @@ make_command_stream (int (*get_next_byte) (void *),
   command_stream_t stream = checked_malloc(sizeof(struct command_stream));
 
   char* string = buildString(get_next_byte, get_next_byte_argument);
-  char* end = string + strlen(string) - 2;
-  
-  int nLines = line_nums(string, end);
 
+  //char* end = string + strlen(string) - 2;
+  char* end = string + strlen(string) - 1;
+    
+  int nLines = line_nums(string, end);
   int i;
   char* a = string;
   char* b;
-  for (i = 0; i < nLines; ++i)
+
+  i = 0;
+  int lineNum = 0;
+  bool foundOp = false;
+  bool finishedCommand = false;
+  bool foundBegCommand = false;
+  b = a;
+  // End doesn't seem to be calculated right 
+  //++end;
+  while (b != end)
+  {
+     //printf("b: <%c>\n", *b);
+     if (*b == '&')
+     {
+       // Check for beggining with operand
+       if (finishedCommand)
+         error(1, 0, "Cannot start with & on line: %d\n", lineNum);
+
+       // Check to make sure not last character
+       if (i == (int)(strlen(string) - 1))
+         error(1, 0, "Missing second & on line: %d\n", lineNum);
+       // Check for second &
+       else if (*(b+1) != '&')
+         error(1, 0, "Missing second & on line: %d\n", lineNum);
+       else
+         foundOp = true;
+     }
+     else if (*b == '|')
+     {
+       // Check for beginnning with operand
+       if (finishedCommand)
+         error(1, 0, "Cannot start with | on line: %d\n", lineNum);
+       else
+         foundOp = true;
+   
+     }
+     else if (*b == '\n')
+     {
+        ++lineNum;
+        
+        // Found end of complete command
+        if (!foundOp && foundBegCommand)
+        {
+          //printf("Found end of complete command\n");
+          char* tempString = copy(a, b+1);
+          validate(tempString, lineNum);
+          push(stream, make_command(tempString, 
+                                    tempString + (int)strlen(tempString), 
+                                    lineNum));
+          a = b + 1;
+          finishedCommand = true;
+          foundOp = false;
+          foundBegCommand = false;
+        }
+     }
+     else if (*b != ' ' && *b != '\t')
+     {
+       finishedCommand = false;
+       foundOp = false;
+       foundBegCommand = true;
+     }
+     ++b;
+  }
+  
+  // Check for unfinished commands
+  if (!finishedCommand)
+  {
+    //printf("Finishing command:\n");
+    char* tempString = copy(a, b+1);
+    validate(tempString, lineNum);
+    push(stream, make_command(tempString,
+                              tempString + (int)strlen(tempString),
+                              lineNum));
+  }
+
+  // Lowell's, also changed end to -1 instead of -2
+  /*for (i = 0; i < nLines; ++i)
   {
       b = a;
       while (*b != '\n') ++b;
@@ -391,7 +478,7 @@ make_command_stream (int (*get_next_byte) (void *),
       validate(line, i+1);
       push(stream, make_command(line, line + (int)strlen(line), i+1));
       a = ++b;
-  }
+  }*/
   
   return stream;
 }
