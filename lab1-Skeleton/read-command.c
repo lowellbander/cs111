@@ -23,6 +23,17 @@ struct node
   node_t next;
 };
 
+char* copy(char* beg, char* end)
+{
+  int size = end - beg;
+  char* string = checked_malloc(size);
+  int i;
+  for (i = 0; i < size; ++i, ++beg) 
+    string[i] = *beg;
+
+  return string;
+}
+
 bool isOperator(char c)
 {
   if (c == '|' || c == '&' || c == ';' || c == '<' || c == '>')
@@ -56,8 +67,9 @@ bool isOperand(char c)
   else return false;
 }
 
-/* Checks to see that a character in the input stream is valid */
+/* Checks to see that a line in the input stream is valid */
 void validate(char* string, int line_num) {
+  printf("validating '%s'\n", string);
   int i;
   int len = strlen(string);
   
@@ -107,10 +119,13 @@ void validate(char* string, int line_num) {
     char c = string[i];
     if (isOperator(c))
     {
+      if ((c == '&' && string[i+1] == '&') || (c == '|' && string[i+1] == '|'))
+        ++i;
+
       //check that it has left and right operands
       int j;
       //left
-      for (j = i - 1; j != -1; --j)
+      for (j = i - 2; j != -1; --j)
       {
         if (isOperand(string[j])) 
         {
@@ -124,7 +139,7 @@ void validate(char* string, int line_num) {
         }
       }
 
-      if (!left) error(1, 0, "missing operand for %c on line %i\n", 
+      if (!left) error(1, 0, "missing left operand for %c on line %i\n", 
                                                     c, line_num);
     }
   }
@@ -134,10 +149,12 @@ void validate(char* string, int line_num) {
     char c = string[i];
     if (isOperator(c))
     {
+      if ((c == '&' && string[i-1] == '&') || (c == '|' && string[i-1] == '|'))
+        --i;
       //check that it has left and right operands
       int j;
       //left
-      for (j = i + 1; j < len; ++j)
+      for (j = i + 2; j < len; ++j)
       {
         if (isOperand(string[j])) 
         {
@@ -151,7 +168,7 @@ void validate(char* string, int line_num) {
         }
       }
 
-      if (!right) error(1, 0, "missing operand for %c on line %i\n", 
+      if (!right) error(1, 0, "missing right operand for %c on line %i\n", 
                                                     c, line_num);
     }
   }
@@ -256,6 +273,7 @@ make_command (char* beg, char* end, int line_num)
     if (isOperator(*optPtr)) 
       error(1, 0, "too few operands on line %i\n", line_num);
 
+    printf("starting with '%s'\n", beg);
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = malloc(sizeof(char)*(end-beg));
@@ -271,6 +289,7 @@ make_command (char* beg, char* end, int line_num)
         word[i] = *ptr;
     }
     *(com->u.word) = word;
+    printf("ending with '%s'\n", word);
   }
   else if (*optPtr == ';')
   {
@@ -340,17 +359,6 @@ void push(command_stream_t stream, command_t com)
     last->next = node;
     return;
   }
-}
-
-char* copy(char* beg, char* end)
-{
-  int size = end - beg;
-  char* string = checked_malloc(size);
-  int i;
-  for (i = 0; i < size; ++i, ++beg) 
-    string[i] = *beg;
-
-  return string;
 }
 
 command_stream_t
