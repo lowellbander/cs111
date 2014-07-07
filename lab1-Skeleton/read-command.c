@@ -34,12 +34,6 @@ char* copy(char* beg, char* end)
   return string;
 }
 
-bool isWhitespace(char c)
-{
-  if (c == ' ' || c == '\t') return true;
-  else return false;
-}
-
 bool isOperator(char c)
 {
   if (c == '|' || c == '&' || c == ';' || c == '<' || c == '>')
@@ -282,12 +276,11 @@ make_command (char* beg, char* end, int line_num)
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = copy(beg, end);
     char* ptr;
-    //printf("starting with '%s'\n", word);
 
     //check for leading white space
     for (ptr = beg; ptr <= end; ++ptr)
     {
-      if (!isWhitespace(*ptr)) 
+      if (isOperand(*ptr) || isSpecial(*ptr)) 
       {
         beg = ptr;
         word = copy(beg, end);
@@ -295,17 +288,15 @@ make_command (char* beg, char* end, int line_num)
       }
     }
     //check for trailing white space
-    /*
     for (ptr = end; ptr >= beg; --ptr)
     {
-      if (!isWhitespace(*ptr)) 
+      if (isOperand(*ptr) || isSpecial(*ptr)) 
       {
-        end = ptr;
+        end = ++ptr;
         word = copy(beg, end);
         break;
       }
-    }*/
-    //printf("ending with '%s'\n", word);
+    }
     *(com->u.word) = word;
   }
   else if (*optPtr == ';')
