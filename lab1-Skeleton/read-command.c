@@ -34,6 +34,12 @@ char* copy(char* beg, char* end)
   return string;
 }
 
+bool isWhitespace(char c)
+{
+  if (c == ' ' || c == '\t') return true;
+  else return false;
+}
+
 bool isOperator(char c)
 {
   if (c == '|' || c == '&' || c == ';' || c == '<' || c == '>')
@@ -273,23 +279,35 @@ make_command (char* beg, char* end, int line_num)
     if (isOperator(*optPtr)) 
       error(1, 0, "too few operands on line %i\n", line_num);
 
-    printf("starting with '%s'\n", beg);
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
-    char* word = malloc(sizeof(char)*(end-beg));
-    char* ptr = beg;
-    int i = 0;
-    bool foundBeg = false;
-    for (; ptr != end + 1; ++ptr, ++i) 
+    char* word = copy(beg, end);
+    char* ptr;
+    printf("starting with '%s'\n", word);
+
+    //check for leading white space
+    for (ptr = beg; ptr <= end; ++ptr)
     {
-      // Skip leading white spaces
-      if (*ptr != ' ' && *ptr != '\t')
-        foundBeg = true;
-      if (foundBeg)
-        word[i] = *ptr;
+      if (!isWhitespace(*ptr)) 
+      {
+        beg = ptr;
+        word = copy(beg, end);
+        break;
+      }
     }
-    *(com->u.word) = word;
+    //check for trailing white space
+    /*
+    for (ptr = end; ptr >= beg; --ptr)
+    {
+      if (!isWhitespace(*ptr)) 
+      {
+        end = ptr;
+        word = copy(beg, end);
+        break;
+      }
+    }*/
     printf("ending with '%s'\n", word);
+    *(com->u.word) = word;
   }
   else if (*optPtr == ';')
   {
