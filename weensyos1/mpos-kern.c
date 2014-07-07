@@ -126,6 +126,7 @@ start(void)
 
 static pid_t do_fork(process_t *parent);
 static pid_t do_newthread(process_t *parent);
+static void do_kill();
 
 void
 interrupt(registers_t *reg)
@@ -187,25 +188,8 @@ interrupt(registers_t *reg)
 		}
 		schedule();
 	
-	case INT_SYS_KILL: {
-		pid_t pid = current->p_registers.reg_eax;		
-		if (pid <= 0 || pid >= NPROCS || pid == current->p_pid
-		    || proc_array[pid].p_state == P_EMPTY)
-			current->p_registers.reg_eax = -1;
-		else 
-		{
-			proc_array[pid].p_state = P_ZOMBIE;
-			proc_array[pid].p_exit_status = current->p_registers.reg_eax;
-			
-			// Wake processes on wait queue
-			if (proc_array[pid].p_queue != NULL)
-			{
-				proc_array[pid].p_queue->p_state = P_RUNNABLE;
-				proc_array[pid].p_registers.reg_eax = proc_array[pid].p_exit_status;
-				proc_array[pid].p_state = P_EMPTY;
-			}
-		}
-	}
+	case INT_SYS_KILL: 
+    do_kill();
 
 	case INT_SYS_WAIT: {
 		// 'sys_wait' is called to retrieve a process's exit status.
@@ -338,6 +322,36 @@ do_newthread(process_t *parent)
 
 	// Return child's process ID to parent
 	return proc_array[i].p_pid;
+}
+
+/**************************************************************************
+ * do_kill
+ *
+ *  This function kills the thread with pid in the current processes's %eax
+ *  register.
+ *
+ **************************************************************************/
+
+static void
+do_kill()
+{
+	pid_t pid = current->p_registers.reg_eax;		
+	if (pid <= 0 || pid >= NPROCS || pid == current->p_pid
+	    || proc_array[pid].p_state == P_EMPTY)
+		current->p_registers.reg_eax = -1;
+	else 
+	{
+		proc_array[pid].p_state = P_ZOMBIE;
+		proc_array[pid].p_exit_status = current->p_registers.reg_eax;
+		
+		// Wake processes on wait queue
+		if (proc_array[pid].p_queue != NULL)
+		{
+			proc_array[pid].p_queue->p_state = P_RUNNABLE;
+			proc_array[pid].p_registers.reg_eax = proc_array[pid].p_exit_status;
+			proc_array[pid].p_state = P_EMPTY;
+		}
+	}
 }
 
 static void
