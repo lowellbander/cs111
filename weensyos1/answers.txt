@@ -78,3 +78,11 @@ Changes were made to the following files:
 * mpos-kern.c: lines 191-192, added new case INT_SYS_KILL
                lines 298-325, defined new function do_newthread()
 
+Response to Exercise 7:
+
+Changes were made to the following files:
+
+* mpos.h: line 14, defined new interrupt code INT_SYS_KILL
+* mpos-app.h: lines 104-118, defined new system call sys_kill()
+* mpos-kern.c: lines 191-192, added new case INT_SYS_KILL
+               lines 327-358, defined new function do_kill()
