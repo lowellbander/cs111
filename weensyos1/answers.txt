@@ -1,6 +1,9 @@
 Name: Lowell Bander
 UCLA ID: 204 156 534
 
+Name: Nicole Yee
+UCLA ID: 403 796 037
+
 
 -------------------------------------------------------------------------------
 
@@ -13,9 +16,64 @@ runnable. When schedule() reaches the process that called sys_getpid(), it
 will call run() on this process, which will in turn return the correct pid.
 
 
+Response to Exercise 3:
+
+We added a wait queue to the process descriptor, namely a pointer to another
+process. Inside INT_SYS_WAIT, if the calling process (current) has not exited 
+yet, it is added to the wait queue described above by storing a pointer to the
+current process into p_queue of proc_array[p]. The calling process is then
+put to sleep, by setting the state to P_BLOCKED. In INT_SYS_EXIT, the current
+process checks to see if there is anything in the wait queue. If so, the
+queued process is woken up, by setting the status to P_RUNNABLE. The exit
+status of the current process is passed on to the queued process by being
+placed in the queued process's %eax register.
 
 Anything else you'd like us to know:
 
 
 
 Extra credit exercises:
+
+Response to Exercise 5:
+// the following function definition would be substituted into mpos-app.c
+
+void start(void)
+{
+  int x = 0;  /* note that local variable x lives on the stack */
+  
+  volatile int* adam = &x; // non-volatile pointer to volatile integer
+  int* volatile eve = &x;  // volatile pointer to non-volatile integer
+  
+  pid_t p = sys_fork();
+  if (p == 0)
+  {
+    adam = &x; 
+    *adam = 1; 
+    
+    eve = &x; 
+    *eve = 1; 
+  } 
+  else if (p > 0)
+    sys_wait(p); // assume blocking implementation
+  app_printf("%d", x);
+  sys_exit(0);
+}
+
+
+Response to Exercise 6:
+
+Changes were made to the following files:
+
+* mpos.h: line 13, defined new interrupt code INT_SYS_NEWTHREAD
+* mpos-app.h: lines 82-103, defined new system call sys_newthread()
+* mpos-kern.c: lines 157-160, added new case INT_SYS_NEWTHREAD
+               lines 286-318, defined new function do_newthread()
+
+Response to Exercise 7:
+
+Changes were made to the following files:
+
+* mpos.h: line 14, defined new interrupt code INT_SYS_KILL
+* mpos-app.h: lines 104-118, defined new system call sys_kill()
+* mpos-kern.c: lines 191-192, added new case INT_SYS_KILL
+               lines 327-358, defined new function do_kill()
