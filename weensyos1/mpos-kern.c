@@ -189,7 +189,7 @@ interrupt(registers_t *reg)
 		schedule();
 	
 	case INT_SYS_KILL: 
-    do_kill();
+		do_kill();
 
 	case INT_SYS_WAIT: {
 		// 'sys_wait' is called to retrieve a process's exit status.
@@ -302,17 +302,17 @@ do_newthread(process_t *parent)
 	int i = 1;
 	while (i < NPROCS && proc_array[i].p_state != P_EMPTY) ++i;
 	// Check if no empty process descriptors
-  if (i == NPROCS) return -1;
+  	if (i == NPROCS) return -1;
 	
 	// Copy parent process's registers
 	proc_array[i].p_registers = parent->p_registers;
 
-  // "Rather than starting at the same instruction as the parent, the new 
-  // thread should start by executing the start_function function: that is, 
-  // that function's address becomes the new thread's instruction pointer."
+  	// "Rather than starting at the same instruction as the parent, the new 
+	  // thread should start by executing the start_function function: that is, 
+  	// that function's address becomes the new thread's instruction pointer."
 
-  // start_function is passed in as %eax
-  proc_array[i].p_registers.reg_eip = parent->p_registers.reg_eax;
+  	// start_function is passed in as %eax
+  	proc_array[i].p_registers.reg_eip = parent->p_registers.reg_eax;
 
 	// return 0 to child process
 	proc_array[i].p_registers.reg_eax = 0;

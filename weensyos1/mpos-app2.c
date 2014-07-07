@@ -61,7 +61,7 @@ run_child(void)
 				   space, so this change to 'counter' will be
 				   visible to all processes. */
 
-    pid_t pid = sys_getpid();
+    	pid_t pid = sys_getpid();
   	if ((pid % 2) == 0)
 		  if (pid + 1 <= NPROCS)
 			  sys_kill(pid + 1);
