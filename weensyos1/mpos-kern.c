@@ -336,7 +336,9 @@ static void
 do_kill()
 {
 	pid_t pid = current->p_registers.reg_eax;		
-	if (pid <= 0 || pid >= NPROCS || pid == current->p_pid
+
+  // check for invalid cases
+	if (pid <= 0 || pid > NPROCS || pid == current->p_pid
 	    || proc_array[pid].p_state == P_EMPTY)
 		current->p_registers.reg_eax = -1;
 	else 
@@ -352,6 +354,7 @@ do_kill()
 			proc_array[pid].p_state = P_EMPTY;
 		}
 	}
+  return;
 }
 
 static void

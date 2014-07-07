@@ -62,9 +62,7 @@ run_child(void)
 				   visible to all processes. */
 
     pid_t pid = sys_getpid();
-  	if ((pid % 2) == 0)
-		  if (pid + 1 <= NPROCS)
-			  sys_kill(pid + 1);
+  	if (!(pid % 2)) sys_kill(pid + 1);
 
 
 	app_printf("Process %d lives, counter %d!\n",
