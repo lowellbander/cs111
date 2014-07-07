@@ -155,8 +155,8 @@ interrupt(registers_t *reg)
 		current->p_registers.reg_eax = do_fork(current);
 		run(current);
 
-  case INT_SYS_NEWTHREAD:
-    // the sys_newthread system call creates a new thread-like process.
+	case INT_SYS_NEWTHREAD:
+		// the sys_newthread system call creates a new thread-like process.
 		current->p_registers.reg_eax = do_newthread(current);
 		run(current);
 
@@ -186,6 +186,26 @@ interrupt(registers_t *reg)
 			current->p_state = P_EMPTY;
 		}
 		schedule();
+	
+	case INT_SYS_KILL: {
+		pid_t p = current->p_registers.reg_eax;		
+		if (p <= 0 || p >= NPROCS || p == current->p_pid
+		    || proc_array[p].p_state == P_EMPTY)
+			current->p_registers.reg_eax = -1;
+		else 
+		{
+			proc_array[p].p_state = P_ZOMBIE;
+			proc_array[p].p_exit_status = current->p_registers.reg_eax;
+			
+			// Wake processes on wait queue
+			if (proc_array[p].p_queue != NULL)
+			{
+				proc_array[p].p_queue->p_state = P_RUNNABLE;
+				proc_array[p].p_registers.reg_eax = proc_array[p].p_exit_status;
+				proc_array[p].p_state = P_EMPTY;
+			}
+		}
+	}
 
 	case INT_SYS_WAIT: {
 		// 'sys_wait' is called to retrieve a process's exit status.
@@ -267,7 +287,7 @@ do_fork(process_t *parent)
 	int i = 1;
 	while (i < NPROCS && proc_array[i].p_state != P_EMPTY) ++i;
 	// Check if no empty process descriptors
-  if (i == NPROCS) return -1;
+	if (i == NPROCS) return -1;
 	
 	// Copy parent process's registers
 	proc_array[i].p_registers = parent->p_registers;

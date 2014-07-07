@@ -61,11 +61,10 @@ run_child(void)
 				   space, so this change to 'counter' will be
 				   visible to all processes. */
 
-  if ((sys_getpid() % 2) == 0)
-  {
-    // this is an even process, so kill the odd processes except for #1
-    app_printf("I am an even process\n");
-  }
+  	if ((sys_getpid() % 2) == 0)
+		if (sys_getpid() + 1 <= NPROCS && sys_getpid() != 0)
+			sys_kill(sys_getpid() + 1);
+
 
 	app_printf("Process %d lives, counter %d!\n",
 		   sys_getpid(), input_counter);

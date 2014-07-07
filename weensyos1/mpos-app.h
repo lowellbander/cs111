@@ -96,8 +96,7 @@ sys_newthread(void (*start_function)(void))
 	pid_t result;
 	asm volatile("int %1\n"
 		     : "=a" (result)
-		     : "i" (INT_SYS_NEWTHREAD),
-           "a" (start_function)
+		     : "i" (INT_SYS_NEWTHREAD), "a" (start_function)
 		     : "cc", "memory");
 	return result;
 }
@@ -109,13 +108,12 @@ sys_newthread(void (*start_function)(void))
  *
  *****************************************************************************/
 
-static inline void 
+static inline void
 sys_kill(pid_t pid)
 {
-	asm volatile("int %1\n"
-		     : 
-		     : "i" (INT_SYS_NEWTHREAD),
-           "a" (pid)
+	asm volatile("int %0\n"
+		     :
+		     : "i" (INT_SYS_KILL), "a" (pid)
 		     : "cc", "memory");
 }
 

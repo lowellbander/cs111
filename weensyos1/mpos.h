@@ -5,12 +5,13 @@
 // System call numbers.
 // An application calls a system call by causing the specified interrupt.
 
-#define INT_SYS_GETPID		  48
+#define INT_SYS_GETPID		    48
 #define INT_SYS_FORK		    49
 #define INT_SYS_YIELD		    50
 #define INT_SYS_EXIT		    51
 #define INT_SYS_WAIT		    52
-#define INT_SYS_NEWTHREAD		53
+#define INT_SYS_NEWTHREAD	    53
+#define INT_SYS_KILL		    54
 
 // These system call numbers currently do nothing; feel free to define them
 // as you like.
