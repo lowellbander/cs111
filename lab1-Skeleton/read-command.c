@@ -171,7 +171,7 @@ void validate(char* string, int line_num) {
         }
       }
 
-      if (!right) error(1, 0, "missing right operand for %c on line %i\n", 
+      if (!right) error(1, 0, "missmaing right operand for %c on line %i\n", 
                                                     c, line_num);
     }
   }
@@ -415,10 +415,10 @@ make_command_stream (int (*get_next_byte) (void *),
          error(1, 0, "Cannot start with & on line: %d\n", lineNum);
 
        // Check to make sure not last character
-       if (i == (int)(strlen(string) - 1))
+       if (i == (int)(strlen(string) - 1) && *(b-1) != '&')
          error(1, 0, "Missing second & on line: %d\n", lineNum);
        // Check for second &
-       else if (*(b+1) != '&')
+       else if (*(b+1) != '&' && *(b-1) != '&')
          error(1, 0, "Missing second & on line: %d\n", lineNum);
        else
          foundOp = true;
