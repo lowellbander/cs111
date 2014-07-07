@@ -188,21 +188,21 @@ interrupt(registers_t *reg)
 		schedule();
 	
 	case INT_SYS_KILL: {
-		pid_t p = current->p_registers.reg_eax;		
-		if (p <= 0 || p >= NPROCS || p == current->p_pid
-		    || proc_array[p].p_state == P_EMPTY)
+		pid_t pid = current->p_registers.reg_eax;		
+		if (pid <= 0 || pid >= NPROCS || pid == current->p_pid
+		    || proc_array[pid].p_state == P_EMPTY)
 			current->p_registers.reg_eax = -1;
 		else 
 		{
-			proc_array[p].p_state = P_ZOMBIE;
-			proc_array[p].p_exit_status = current->p_registers.reg_eax;
+			proc_array[pid].p_state = P_ZOMBIE;
+			proc_array[pid].p_exit_status = current->p_registers.reg_eax;
 			
 			// Wake processes on wait queue
-			if (proc_array[p].p_queue != NULL)
+			if (proc_array[pid].p_queue != NULL)
 			{
-				proc_array[p].p_queue->p_state = P_RUNNABLE;
-				proc_array[p].p_registers.reg_eax = proc_array[p].p_exit_status;
-				proc_array[p].p_state = P_EMPTY;
+				proc_array[pid].p_queue->p_state = P_RUNNABLE;
+				proc_array[pid].p_registers.reg_eax = proc_array[pid].p_exit_status;
+				proc_array[pid].p_state = P_EMPTY;
 			}
 		}
 	}
