@@ -30,7 +30,7 @@ char* copy(char* beg, char* end)
   int i;
   for (i = 0; i < size; ++i, ++beg) 
     string[i] = *beg;
-  puts(string);
+  //puts(string);
   return string;
 }
 
@@ -118,16 +118,18 @@ void validate(char* string, int line_num) {
   {
     bool left = false;
     char c = string[i];
-    if (isOperator(c))
-    {
-      if ((c == '&' && string[i+1] == '&') || (c == '|' && string[i+1] == '|'))
-        ++i;
+    //printf("c: <%c>\n", c);
 
-      //check that it has left and right operands
+    if (isOperator(c) && 
+        ((c == '&' && string[i-1] != '&') || ((c == '|' && string[i-1] != '|') ||
+                                             (c != '|' && c != '&'))))
+    {
+      //check that it has left operands
       int j;
       //left
-      for (j = i - 2; j != -1; --j)
+      for (j = i - 1; j != -1; --j)
       {
+        //printf("string[%d]: <%c>\n", j, string[j]);
         if (isOperand(string[j])) 
         {
           left = true;
@@ -148,14 +150,14 @@ void validate(char* string, int line_num) {
   {
     bool right = false;
     char c = string[i];
-    if (isOperator(c))
+    if (isOperator(c) && 
+        ((c == '&' && string[i-1] == '&') || ((c == '|' && string[i-1] == '|') ||
+                                             (c != '|' && c != '&'))))
     {
-      if ((c == '&' && string[i-1] == '&') || (c == '|' && string[i-1] == '|'))
-        --i;
-      //check that it has left and right operands
+      //check that it has right operands
       int j;
       //left
-      for (j = i + 2; j < len; ++j)
+      for (j = i + 1; j < len; ++j)
       {
         if (isOperand(string[j])) 
         {
@@ -299,9 +301,9 @@ make_command (char* beg, char* end, int line_num)
         break;
       }
     }
-    printf("Making simple command: <");
-    puts(word);
-    printf(">\n");
+    //printf("Making simple command: <");
+    //puts(word);
+    //printf(">\n");
     *(com->u.word) = word;
   }
   else if (*optPtr == ';')
