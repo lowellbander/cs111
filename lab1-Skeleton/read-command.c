@@ -1,7 +1,7 @@
 // UCLA CS 111 Lab 1 command reading
 
 /* 
-  TODO: a____;  (get rid of last semicolon)
+  TODO: 
         a____b  (get rid of spaces in between?)
         get rid of last ; after complete command
         nested subshell
@@ -40,9 +40,9 @@ char* copy(char* beg, char* end)
   int i;
   for (i = 0; i < size; ++i, ++beg) 
     string[i] = *beg;
-  printf("copy: <");
-  puts(string);
-  printf(">\n");
+  //printf("copy: <");
+  //puts(string);
+  //printf(">\n");
   return string;
 }
 
@@ -84,7 +84,7 @@ void validate(char* string, int line_num) {
   int i;
   int len = strlen(string);
   //printf("length: %d\n", len);
-  
+  //puts(string);
   int balance = 0;
   for (i = 0; i < len; ++i)
   {
@@ -132,9 +132,9 @@ void validate(char* string, int line_num) {
     char c = string[i];
     //printf("c: <%c>\n", c);
 
-    if (isOperator(c) && 
+    if (isOperator(c) &&
         ((c == '&' && string[i-1] != '&') || ((c == '|' && string[i-1] != '|') ||
-                                             (c != '|' && c != '&'))))
+                                             (c != '|' && c != '&' && c != ';'))))
     {
       //check that it has left operands
       int j;
@@ -162,9 +162,9 @@ void validate(char* string, int line_num) {
   {
     bool right = false;
     char c = string[i];
-    if (isOperator(c) && 
+    if (isOperator(c) &&
         ((c == '&' && string[i-1] == '&') || ((c == '|' && string[i-1] == '|') ||
-                                             (c != '|' && c != '&'))))
+                                             (c != '|' && c != '&' && c != ';'))))
     {
       //check that it has right operands
       int j;
@@ -222,9 +222,12 @@ char* get_opt_ptr(char* beg, char* end)
 {
   char* ptr = end;
 
+  bool foundOperand = false;
   while(ptr != beg)
   {
-    if (*ptr == ';')
+    if(isOperand(*ptr))
+      foundOperand = true;
+    if (*ptr == ';' && foundOperand)
       goto done;
     --ptr;
   }
@@ -291,14 +294,16 @@ make_command (char* beg, char* end, int line_num)
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = copy(beg, end);
-    printf("word: <"); puts(word); printf(">\n"); printf("length: %d\n", strlen(word));
+    //printf("word: <"); puts(word); printf(">\n"); printf("length: %d\n", strlen(word));
     char* ptr;
 
+    bool foundOperand = false;
     for (ptr = beg; ptr <= end; ++ptr)
     {
-      printf("Getting rid of leading\n");
+      //printf("Getting rid of leading\n");
       if (isOperand(*ptr) || isSpecial(*ptr)) 
       {
+        foundOperand = true;
         beg = ptr;
         word = copy(beg, end);
         break;
@@ -307,18 +312,20 @@ make_command (char* beg, char* end, int line_num)
 
     for (ptr = end; ptr >= beg; --ptr)
     {
-      printf("Getting rid of trailing\n");
+      //printf("Getting rid of trailing\n");
       if (isOperand(*ptr) || isSpecial(*ptr)) 
       {
         end = ++ptr;
         word = copy(beg, end);
         break;
       }
-      else printf("skipiping over: <%c>\n", *ptr);
+      //else printf("skipiping over: <%c>\n", *ptr);
     }
-    printf("Making simple command: <");
-    puts(word);
-    printf(">\n");
+    //printf("Making simple command: <");
+    //puts(word);
+    //printf(">\n");
+    if (!foundOperand)
+      error(1, 0, "No operands before ; on line: %d\n", line_num);
     *(com->u.word) = word;
   }
   else if (*optPtr == ';')
@@ -486,7 +493,9 @@ if (foundComment) printf("*******************foundComment = true\n"); else print
         if (!foundOp && foundBegCommand && !foundComment)
         {
           //printf("Found end of complete command\n");
-          char* tempString = copy(a, b+1);
+          char* tempString = checked_malloc(sizeof(copy(a, b+1)));
+          tempString = copy(a, b+1);
+          //puts(tempString);
           validate(tempString, lineNum);
           push(stream, make_command(tempString, 
                                     tempString + (int)strlen(tempString), 
@@ -504,7 +513,8 @@ if (foundComment) printf("*******************foundComment = true\n"); else print
           if (foundBegCommand)
           {
             //printf("Found end of comment and making command!\n");
-            char* tempString = copy(a, beforeComment+1);
+            char* tempString = checked_malloc(sizeof(copy(a, beforeComment+1)));
+            tempString = copy(a, beforeComment+1);
             validate(tempString, lineNum);
             push(stream, make_command(tempString, 
                                       tempString + (int)strlen(tempString), 
@@ -531,7 +541,8 @@ if (foundComment) printf("*******************foundComment = true\n"); else print
   if (!finishedCommand)
   {
     //printf("Finishing command:\n");
-    char* tempString = copy(a, b+1);
+    char* tempString = checked_malloc(sizeof(copy(a, b+1)));
+    tempString = copy(a, b+1);
     //puts(tempString);
     validate(tempString, lineNum);
     push(stream, make_command(tempString,
