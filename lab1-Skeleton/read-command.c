@@ -1,5 +1,15 @@
 // UCLA CS 111 Lab 1 command reading
 
+/* 
+  TODO: a____;  
+        a____b
+        get rid of last ; after complete command
+        nested subshell
+        precedence
+        input/output
+        g++ -c foo.c gives weird output
+*/
+
 #include "command.h"
 #include "command-internals.h"
 #include "alloc.h"
@@ -30,7 +40,9 @@ char* copy(char* beg, char* end)
   int i;
   for (i = 0; i < size; ++i, ++beg) 
     string[i] = *beg;
-  //puts(string);
+  printf("copy: <");
+  puts(string);
+  printf(">\n");
   return string;
 }
 
@@ -171,7 +183,7 @@ void validate(char* string, int line_num) {
         }
       }
 
-      if (!right) error(1, 0, "missmaing right operand for %c on line %i\n", 
+      if (!right) error(1, 0, "missing right operand for %c on line %i\n", 
                                                     c, line_num);
     }
   }
@@ -279,11 +291,12 @@ make_command (char* beg, char* end, int line_num)
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = copy(beg, end);
+    printf("word: <"); puts(word); printf(">\n");
     char* ptr;
 
-    //check for leading white space
     for (ptr = beg; ptr <= end; ++ptr)
     {
+      printf("Getting rid of leading\n");
       if (isOperand(*ptr) || isSpecial(*ptr)) 
       {
         beg = ptr;
@@ -291,9 +304,10 @@ make_command (char* beg, char* end, int line_num)
         break;
       }
     }
-    //check for trailing white space
+
     for (ptr = end; ptr >= beg; --ptr)
     {
+      printf("Getting rid of trailing\n");
       if (isOperand(*ptr) || isSpecial(*ptr)) 
       {
         end = ++ptr;
@@ -301,9 +315,9 @@ make_command (char* beg, char* end, int line_num)
         break;
       }
     }
-    //printf("Making simple command: <");
-    //puts(word);
-    //printf(">\n");
+    printf("Making simple command: <");
+    puts(word);
+    printf(">\n");
     *(com->u.word) = word;
   }
   else if (*optPtr == ';')
@@ -398,20 +412,52 @@ make_command_stream (int (*get_next_byte) (void *),
   char* b;
 
   i = 0;
-  int lineNum = 0;
+  char* beforeComment = a;
+  int lineNum = 1;
   bool foundOp = false;
   bool finishedCommand = false;
   bool foundBegCommand = false;
+  bool foundComment = false;
   b = a;
   // End doesn't seem to be calculated right 
   //++end;
   while (b != end)
   {
+    //printf("b: <%c>\n", *b);
+/*if (foundOp) printf("foundOp = true\n"); else printf("foundOp = false\n");
+if (finishedCommand) printf("finishedCommand = true\n"); else printf("finishedCommand = false\n");
+if (foundBegCommand) printf("foundBegCommand = true\n"); else printf("foundBegCommand = false\n");
+if (foundComment) printf("*******************foundComment = true\n"); else printf("foundComment = false\n");*/
+     // Skip over comments
+     if (*b == '#')
+     {
+       // If not first character
+       if (b != string)
+       {
+         // Check if immediately preceded by ordinary token
+         if (isalpha(*(b-1)) || isdigit(*(b-1)) ||
+             *(b-1) == '!' ||
+             *(b-1) == '%' ||
+             *(b-1) == '+' ||
+             *(b-1) == ',' ||
+             *(b-1) == '-' ||
+             *(b-1) == '.' ||
+             *(b-1) == '/' ||
+             *(b-1) == ':' ||
+             *(b-1) == '@' ||
+             *(b-1) == '^' ||
+             *(b-1) == '_')
+           error(1, 0, "invalid character # at line: %d\n", lineNum);
+         else foundComment = true;
+       }
+       foundComment = true;
+       beforeComment = b - 1;
+     }
      //printf("b: <%c>\n", *b);
-     if (*b == '&')
+     else if (*b == '&')
      {
        // Check for beggining with operand
-       if (finishedCommand)
+       if (finishedCommand && !foundComment)
          error(1, 0, "Cannot start with & on line: %d\n", lineNum);
 
        // Check to make sure not last character
@@ -420,24 +466,23 @@ make_command_stream (int (*get_next_byte) (void *),
        // Check for second &
        else if (*(b+1) != '&' && *(b-1) != '&')
          error(1, 0, "Missing second & on line: %d\n", lineNum);
-       else
+       else if (!foundComment)
          foundOp = true;
      }
      else if (*b == '|')
      {
        // Check for beginnning with operand
-       if (finishedCommand)
+       if (finishedCommand && !foundComment)
          error(1, 0, "Cannot start with | on line: %d\n", lineNum);
-       else
+       else if (!foundComment)
          foundOp = true;
-   
      }
      else if (*b == '\n')
      {
         ++lineNum;
         
         // Found end of complete command
-        if (!foundOp && foundBegCommand)
+        if (!foundOp && foundBegCommand && !foundComment)
         {
           //printf("Found end of complete command\n");
           char* tempString = copy(a, b+1);
@@ -450,8 +495,29 @@ make_command_stream (int (*get_next_byte) (void *),
           foundOp = false;
           foundBegCommand = false;
         }
+        else if (foundComment) 
+        {
+          // Found end of comment
+          foundComment = false;
+          // End of comment, make command preceding it
+          if (foundBegCommand)
+          {
+            //printf("Found end of comment and making command!\n");
+            char* tempString = copy(a, beforeComment+1);
+            validate(tempString, lineNum);
+            push(stream, make_command(tempString, 
+                                      tempString + (int)strlen(tempString), 
+                                      lineNum));
+            a = b + 1;
+            finishedCommand = true;
+            foundOp = false;
+            foundBegCommand = false;
+          }
+          // Comment came after already made complete command
+          else a = b;
+        }
      }
-     else if (*b != ' ' && *b != '\t')
+     else if (*b != ' ' && *b != '\t' && !foundComment)
      {
        finishedCommand = false;
        foundOp = false;
@@ -465,6 +531,7 @@ make_command_stream (int (*get_next_byte) (void *),
   {
     //printf("Finishing command:\n");
     char* tempString = copy(a, b+1);
+    //puts(tempString);
     validate(tempString, lineNum);
     push(stream, make_command(tempString,
                               tempString + (int)strlen(tempString),
