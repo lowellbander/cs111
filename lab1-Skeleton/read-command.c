@@ -2,7 +2,6 @@
 
 /* 
   TODO: 
-        a____b  (get rid of spaces in between?)
         nested subshell
         precedence
         input/output
@@ -336,9 +335,9 @@ make_command (char* beg, char* end, int line_num)
       }
       //else printf("skipiping over: <%c>\n", *ptr);
     }
-    printf("Making simple command: <");
-    puts(word);
-    printf(">\n");
+    //printf("Making simple command: <");
+    //puts(word);
+    //printf(">\n");
     if (!foundOperand)
       error(1, 0, "No operands before ; on line: %d\n", line_num);
     *(com->u.word) = word;
