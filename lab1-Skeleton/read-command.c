@@ -1,8 +1,8 @@
 // UCLA CS 111 Lab 1 command reading
 
 /* 
-  TODO: a____;  
-        a____b
+  TODO: a____;  (get rid of last semicolon)
+        a____b  (get rid of spaces in between?)
         get rid of last ; after complete command
         nested subshell
         precedence
@@ -291,7 +291,7 @@ make_command (char* beg, char* end, int line_num)
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = copy(beg, end);
-    printf("word: <"); puts(word); printf(">\n");
+    printf("word: <"); puts(word); printf(">\n"); printf("length: %d\n", strlen(word));
     char* ptr;
 
     for (ptr = beg; ptr <= end; ++ptr)
@@ -314,6 +314,7 @@ make_command (char* beg, char* end, int line_num)
         word = copy(beg, end);
         break;
       }
+      else printf("skipiping over: <%c>\n", *ptr);
     }
     printf("Making simple command: <");
     puts(word);
