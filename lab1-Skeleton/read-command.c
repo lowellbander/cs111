@@ -3,7 +3,6 @@
 /* 
   TODO: 
         a____b  (get rid of spaces in between?)
-        get rid of last ; after complete command
         nested subshell
         precedence
         input/output
@@ -37,9 +36,25 @@ char* copy(char* beg, char* end)
 {
   int size = end - beg;
   char* string = checked_malloc(size);
-  int i;
-  for (i = 0; i < size; ++i, ++beg) 
-    string[i] = *beg;
+  int i = 0;
+  int numSpace = 0;
+
+  while (beg != end)
+  {
+    if (*beg == ' ' || *beg == '\t' || *beg == '\n')
+      numSpace++;
+    else
+      numSpace = 0;
+
+    // Skip extra white spaces in between
+    if (numSpace <= 1)
+    {
+      string[i] = *beg;
+      ++i;
+    }
+
+    ++beg;
+  }
   //printf("copy: <");
   //puts(string);
   //printf(">\n");
@@ -321,9 +336,9 @@ make_command (char* beg, char* end, int line_num)
       }
       //else printf("skipiping over: <%c>\n", *ptr);
     }
-    //printf("Making simple command: <");
-    //puts(word);
-    //printf(">\n");
+    printf("Making simple command: <");
+    puts(word);
+    printf(">\n");
     if (!foundOperand)
       error(1, 0, "No operands before ; on line: %d\n", line_num);
     *(com->u.word) = word;
