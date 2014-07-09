@@ -234,52 +234,39 @@ char* buildString(int (*get_next_byte) (void *),
 
 char* get_opt_ptr(char* beg, char* end)
 {
-  char* ptr = end;
+  char* seq = NULL;
+  char* andor = NULL;
+  char* pipe = NULL;
+  char* paren = NULL; // closed paren )
+  int paren_ctr = 0; // 0 => not inside parens
+  char* ptr;
+  for (ptr = end; ptr >= beg; ++ptr)
+  {
+    char c = *ptr;
+    if (paren_ctr == 0)
+      switch (c) 
+      {
+        case ';':
+          if (!seq) seq = ptr;
+          break;
+        case '|':
+        case '&':
+          if (*(ptr-1) != '|') 
+          {
+            if (!pipe) pipe = ptr;
+            break;
+          }
+          if (!andor) andor = ptr;
+          break;
+      }
+    if (c == ')' && !paren) paren = ptr;
+  }
 
-  bool foundOperand = false;
-  while(ptr != beg)
-  {
-    if(isOperand(*ptr))
-      foundOperand = true;
-    if (*ptr == ';' && foundOperand)
-      goto done;
-    --ptr;
-  }
-  ptr = end;
-  while(ptr != beg)
-  {
-    if (*ptr == ')')
-      goto done;
-    --ptr;
-  }
-  ptr = end;
-  while(ptr != beg)
-  { 
-    if (*ptr == '|')
-    {
-      //Check if OR
-      if(*(ptr-1) != '|')
-        goto done;
-      ptr--;
-    }
-    --ptr;
-  }
-  ptr = end;
-  while(ptr != beg)
-  {
-    if (*ptr == '&')
-      goto done;
-    --ptr;
-  }
-  ptr = end;
-  while(ptr != beg)
-  {
-    if (*ptr == '|')
-      goto done;
-    --ptr;
-  }
-  done:
-  return ptr;
+  if (seq) return seq;
+  else if (andor) return andor;
+  else if (pipe) return pipe;
+  else if (paren) return paren;
+  else return NULL; // simple command
 }
 
 command_t
@@ -300,7 +287,7 @@ make_command (char* beg, char* end, int line_num)
    * */
   
   //Check command type
-  if (optPtr == beg)
+  if (!optPtr)
   {
     //TODO: deprecate
     if (isOperator(*optPtr)) 
