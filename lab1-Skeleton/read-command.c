@@ -3,7 +3,7 @@
 /* 
   TODO: 
         nested subshell
-        precedence
+        precedence~
         input/output
         g++ -c foo.c gives weird output
 */
