@@ -287,6 +287,7 @@ make_command (char* beg, char* end, int line_num)
 {
   char* optPtr = get_opt_ptr(beg, end);
   command_t com = checked_malloc(sizeof(struct command));
+  com->status = -1;   // command has not yet exited
   
   /* OPERATOR PRECEDENCE
    * (highest)
