@@ -326,23 +326,23 @@ make_command (char* beg, char* end, int line_num)
       }
       //else printf("skipiping over: <%c>\n", *ptr);
     }
-    printf("Making simple command: <");
-    puts(word);
-    printf(">\n");
+    //printf("Making simple command: <");
+    //puts(word);
+    //printf(">\n");
     //if (!foundOperand)
     //  error(1, 0, "No operands before ; on line: %d\n", line_num);
     *(com->u.word) = word;
   }
   else if (*optPtr == ';')
   {
-    printf("Making sequence command\n");
+    //printf("Making sequence command\n");
     com->type = SEQUENCE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == ')')
   {
-    printf("Making subshell command\n");
+    //printf("Making subshell command\n");
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
     while (*open != '(') ++open;
@@ -350,21 +350,21 @@ make_command (char* beg, char* end, int line_num)
   }
   else if (*optPtr == '|' && *(optPtr-1) != '|')
   {
-    printf("Making pipe command\n");
+    //printf("Making pipe command\n");
     com->type = PIPE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == '|')
   {
-    printf("Making OR command\n");
+    //printf("Making OR command\n");
     com->type = OR_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 2, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == '&')
   {
-    printf("Making AND command\n");
+    //printf("Making AND command\n");
     com->type = AND_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 2, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
@@ -416,7 +416,6 @@ make_command_stream (int (*get_next_byte) (void *),
 
   char* string = buildString(get_next_byte, get_next_byte_argument);
 
-  //char* end = string + strlen(string) - 2;
   char* end = string + strlen(string) - 1;
     
   int nLines = line_nums(string, end);
@@ -432,12 +431,10 @@ make_command_stream (int (*get_next_byte) (void *),
   bool foundBegCommand = false;
   bool foundComment = false;
   b = a;
-  // End doesn't seem to be calculated right 
-  //++end;
-  int sanity = 0;
+ 
   while (b <= end)
-  { ++sanity;
-    printf("b: <%c>\n", *b);
+  { 
+    //printf("b: <%c>\n", *b);
 /*if (foundOp) printf("foundOp = true\n"); else printf("foundOp = false\n");
 if (finishedCommand) printf("finishedCommand = true\n"); else printf("finishedCommand = false\n");
 if (foundBegCommand) printf("foundBegCommand = true\n"); else printf("foundBegCommand = false\n");
@@ -500,7 +497,7 @@ if (foundComment) printf("*******************foundComment = true\n"); else print
         // Found end of complete command
         if (!foundOp && foundBegCommand && !foundComment)
         {
-          printf("Found end of complete command\n");
+          //printf("Found end of complete command\n");
           char* tempString = checked_malloc(sizeof(copy(a, b+1)));
           tempString = copy(a, b+1);
           //puts(tempString);
@@ -551,27 +548,13 @@ if (foundComment) printf("*******************foundComment = true\n"); else print
   {
     char* tempString;
     printf("Finishing command:\n");
-    if (lineNum == 1) tempString = copy(a, b+1);
-    else tempString = copy(a, b+1);
+    tempString = copy(a, b+1);
     puts(tempString);
-    printf("strlen: %d, sanity: %d\n", strlen(tempString), sanity);
     validate(tempString, lineNum);
-   
     push(stream, make_command(tempString,
                               tempString + (int)strlen(tempString),
                               lineNum));
   }
-
-  // Lowell's, also changed end to -1 instead of -2
-  /*for (i = 0; i < nLines; ++i)
-  {
-      b = a;
-      while (*b != '\n') ++b;
-      char* line = copy(a, b);
-      validate(line, i+1);
-      push(stream, make_command(line, line + (int)strlen(line), i+1));
-      a = ++b;
-  }*/
   
   return stream;
 }
