@@ -1,11 +1,7 @@
 // UCLA CS 111 Lab 1 command reading
 
 /* 
-  TODO: 
-        nested subshell
-        precedence
-        input/output
-        g++ -c foo.c gives weird output
+  TODO: input/output
 */
 
 #include "command.h"
@@ -34,7 +30,7 @@ struct node
 char* copy(char* beg, char* end)
 {
   int size = end - beg;
-  char* string = checked_malloc(size);
+  char* string = checked_malloc(size+1);
   int i = 0;
   int numSpace = 0;
 
@@ -57,6 +53,8 @@ char* copy(char* beg, char* end)
   //printf("copy: <");
   //puts(string);
   //printf(">\n");
+  // End string properly
+  string[i] = '\0';
   return string;
 }
 
@@ -114,7 +112,7 @@ void validate(char* string, int line_num) {
     char c = string[i];
 
     if (isOperator(c) || isOperand(c) || c == ' ' || c == '\t' || c == '\n') continue;
-    else error(1, 0, "invalid character on line %i: %c", line_num, c);
+    else error(1, 0, "invalid character on line %i: [%c]", line_num, c);
   }
 
   //check for double/triple operators
@@ -226,7 +224,10 @@ char* buildString(int (*get_next_byte) (void *),
     c  = get_next_byte(get_next_byte_argument);
     ++i;
   }
-
+  // End string properly
+  if (strlen(string) >= size) 
+      string = checked_grow_alloc(string, &size);
+  string[i] = '\0';
   return string;
 }
 
@@ -251,8 +252,6 @@ char* get_opt_ptr(char* beg, char* end)
           break;
         case '|':
         case '&':
-          //printf("FOUND: %c\n", c);
-          
           // Found first & or || not in parentheses
           if  ((*ptr == '&' && !andor) ||
                (*(ptr-1) == '|' && !andor))
@@ -260,23 +259,11 @@ char* get_opt_ptr(char* beg, char* end)
           // Found first pipe
           else if (*(ptr-1) != '|' && !pipe)
             pipe = ptr;          
-          /*if (*(ptr-1) != '|') 
-          {
-            if (!pipe)
-            {
-              printf("Writing to pipe\n");
-              pipe = ptr;
-            }
-            break;
-          }
-          if (andor == NULL)
-          {
-            printf("Writing to andor: %c\n", c); 
-            andor = ptr;
-          }*/
           break;
       }
     if (c == ')' && !paren) paren = ptr;
+    if (c == ')') ++paren_ctr;
+    if (c == '(') --paren_ctr;
   }
   if (seq) return seq;
   else if (andor) return andor;
@@ -339,23 +326,23 @@ make_command (char* beg, char* end, int line_num)
       }
       //else printf("skipiping over: <%c>\n", *ptr);
     }
-    //printf("Making simple command: <");
-    //puts(word);
-    //printf(">\n");
+    printf("Making simple command: <");
+    puts(word);
+    printf(">\n");
     //if (!foundOperand)
     //  error(1, 0, "No operands before ; on line: %d\n", line_num);
     *(com->u.word) = word;
   }
   else if (*optPtr == ';')
   {
-    //printf("Making sequence command\n");
+    printf("Making sequence command\n");
     com->type = SEQUENCE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == ')')
   {
-    //printf("Making subshell command\n");
+    printf("Making subshell command\n");
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
     while (*open != '(') ++open;
@@ -363,21 +350,21 @@ make_command (char* beg, char* end, int line_num)
   }
   else if (*optPtr == '|' && *(optPtr-1) != '|')
   {
-    //printf("Making pipe command\n");
+    printf("Making pipe command\n");
     com->type = PIPE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == '|')
   {
-    //printf("Making OR command\n");
+    printf("Making OR command\n");
     com->type = OR_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 2, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == '&')
   {
-    //printf("Making AND command\n");
+    printf("Making AND command\n");
     com->type = AND_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 2, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
@@ -447,9 +434,10 @@ make_command_stream (int (*get_next_byte) (void *),
   b = a;
   // End doesn't seem to be calculated right 
   //++end;
-  while (b != end)
-  {
-    //printf("b: <%c>\n", *b);
+  int sanity = 0;
+  while (b <= end)
+  { ++sanity;
+    printf("b: <%c>\n", *b);
 /*if (foundOp) printf("foundOp = true\n"); else printf("foundOp = false\n");
 if (finishedCommand) printf("finishedCommand = true\n"); else printf("finishedCommand = false\n");
 if (foundBegCommand) printf("foundBegCommand = true\n"); else printf("foundBegCommand = false\n");
@@ -512,7 +500,7 @@ if (foundComment) printf("*******************foundComment = true\n"); else print
         // Found end of complete command
         if (!foundOp && foundBegCommand && !foundComment)
         {
-          //printf("Found end of complete command\n");
+          printf("Found end of complete command\n");
           char* tempString = checked_malloc(sizeof(copy(a, b+1)));
           tempString = copy(a, b+1);
           //puts(tempString);
@@ -561,11 +549,14 @@ if (foundComment) printf("*******************foundComment = true\n"); else print
   // Check for unfinished commands
   if (!finishedCommand)
   {
-    //printf("Finishing command:\n");
-    char* tempString = checked_malloc(sizeof(copy(a, b+1)));
-    tempString = copy(a, b+1);
-    //puts(tempString);
+    char* tempString;
+    printf("Finishing command:\n");
+    if (lineNum == 1) tempString = copy(a, b+1);
+    else tempString = copy(a, b+1);
+    puts(tempString);
+    printf("strlen: %d, sanity: %d\n", strlen(tempString), sanity);
     validate(tempString, lineNum);
+   
     push(stream, make_command(tempString,
                               tempString + (int)strlen(tempString),
                               lineNum));
