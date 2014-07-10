@@ -37,7 +37,7 @@ char* copy(char* beg, char* end)
 
   while (beg != end)
   {
-    if (*beg == ' ' || *beg == '\t' || *beg == '\n')
+    if (*beg == ' ' || *beg == '\t')
       numSpace++;
     else
       numSpace = 0;
@@ -100,20 +100,30 @@ void validate(char* string, int line_num) {
   //puts(string);
   const char* end = string + len;
   int balance = 0;
+  int line = line_num;
+
+  for (i = 0; i < len; ++i)
+    if (string[i] == '\n') --line;
 
   for (i = 0; i < len; ++i)
   {
     bool left = false;
     bool right = false;
     char c = string[i];
-    printf("c: %c\n", c);
+    //printf("c: %c\n", c);
+    //printf("line: %d\n", line);
+
+    // Keep track of line number
+    if (c == '\n')
+      ++line;
     // Check for balanced parentheses
-    if (c == ')') ++balance;
-    if (c == '(') --balance;
+    if (c == '(') ++balance;
+    if (c == ')') --balance;
+    if (balance < 0) error(1, 0, "mismatching parentheses on line %d", line);
 
     // Check for invalid characters
     if (!isOperator(c) && !isOperand(c) && c != ' ' && c != '\t' && c != '\n')
-      error(1, 0, "invalid character on line %i: [%c]", line_num, c);
+      error(1, 0, "invalid character on line %i: [%c]", line, c);
 
     // Check for left and right operands
     // Cases: first & of AND, pipe, first | of OR, ;, <, >
@@ -136,11 +146,10 @@ void validate(char* string, int line_num) {
         if (isOperator(string[l]))
         {
           left = false;
-          error(1, 0, "found %c after %c without operand in between on line %d", c, string[l], line_num);
+          error(1, 0, "found %c after %c without operand in between on line %d", c, string[l], line);
         }
       }
-      if (!left) error(1, 0, "missing left operand for %c on line %i\n", 
-                                                    c, line_num);
+      if (!left) error(1, 0, "missing left operand for %c on line %i\n", c, line);
       // Check that it has right operands
       int r;
       // Skip over second & and | of AND and OR
@@ -156,101 +165,23 @@ void validate(char* string, int line_num) {
         if (isOperator(string[r]))
         {
           right = false;
-          error(1, 0, "found %c after %c without operand in between on line %d", string[r], c, line_num);
+          error(1, 0, "found %c after %c without operand in between on line %d", string[r], c, line);
         }
       }
-      if (!right) error(1, 0, "missing right operand for %c on line %i\n", 
-                                                    c, line_num);
+      if (!right) 
+      {
+        if (c == '&') 
+          error(1, 0, "missing right operand for && on line %i\n", line);
+        else if (c == '|' && string[i+1] == '|') 
+          error(1, 0, "missing right operand for || on line %i\n", line);
+        else
+          error(1, 0, "missing right operand for %c on line %i\n", c, line);
+      }
     }
   }
 
   if (balance != 0)
-    error(1, 0, "unmatched parenthesis on line %i\n", line_num);
-/*
-///////////////////////////////////////////////////////////////////////////////////
-  // Check for double/triple operators
-  char* ops = "<>|&;";
-  for (i = 0; i < (int)strlen(ops); ++i)
-  {
-    char op = ops[i];
-    char* ptr;
-    const char* end = string + len;
-    for (ptr = string; ptr < end; ++ptr)
-    {
-      if (*ptr == op)
-        if (++ptr != end && *ptr == op)
-        {
-          if (op == ';')
-            error(1, 0, "invalid sequence on line %i: %c%c%c\n", 
-                                                 line_num, op, op, op);
-          else if (++ptr != end && *ptr == op)
-            error(1, 0, "invalid sequence on line %i: %c%c%c\n", 
-                                                 line_num, op, op, op);
-        }
-    }
-  }
-
-  // Check that all operators have operands
-  for (i = 0; i < len; ++i)
-  {
-    bool left = false;
-    char c = string[i];
-    //printf("c: <%c>\n", c);
-
-    if (isOperator(c) &&
-        ((c == '&' && string[i-1] != '&') || ((c == '|' && string[i-1] != '|') ||
-                                             (c != '|' && c != '&' && c != ';'))))
-    {
-      // Check that it has left operands
-      int j;
-      for (j = i - 1; j != -1; --j)
-      {
-        //printf("string[%d]: <%c>\n", j, string[j]);
-        if (isOperand(string[j])) 
-        {
-          left = true;
-          break;
-        }
-        if (isOperator(string[j]))
-        {
-          left = false;
-          break;
-        }
-      }
-
-      if (!left) error(1, 0, "missing left operand for %c on line %i\n", 
-                                                    c, line_num);
-    }
-  }
-  for (i = len-1; i > -1; --i)
-  {
-    bool right = false;
-    char c = string[i];
-    if (isOperator(c) &&
-        ((c == '&' && string[i-1] == '&') || ((c == '|' && string[i-1] == '|') ||
-                                             (c != '|' && c != '&' && c != ';'))))
-    {
-      // Check that it has right operands
-      int j;
-      for (j = i + 1; j < len; ++j)
-      {
-        if (isOperand(string[j])) 
-        {
-          right = true;
-          break;
-        }
-        if (isOperator(string[j]))
-        {
-          right = false;
-          break;
-        }
-      }
-
-      if (!right) error(1, 0, "missing right operand for %c on line %i\n", 
-                                                    c, line_num);
-    }
-  }
-*/
+    error(1, 0, "unmatched parenthesis on line %i\n", line);
 }
 
 /* Builds a string from file stream */
@@ -596,9 +527,9 @@ if (foundComment) printf("*******************foundComment = true\n"); else print
   if (!finishedCommand)
   {
     char* tempString;
-    printf("Finishing command:\n");
+    //printf("Finishing command:\n");
     tempString = copy(a, b+1);
-    puts(tempString);
+    //puts(tempString);
     validate(tempString, lineNum);
     push(stream, make_command(tempString,
                               tempString + (int)strlen(tempString),
