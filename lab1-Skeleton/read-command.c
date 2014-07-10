@@ -2,6 +2,7 @@
 
 /* 
   TODO: input/output
+        f|______
 */
 
 #include "command.h"
@@ -97,25 +98,77 @@ void validate(char* string, int line_num) {
   int len = strlen(string);
   //printf("length: %d\n", len);
   //puts(string);
+  const char* end = string + len;
   int balance = 0;
+
   for (i = 0; i < len; ++i)
   {
-    if (string[i] == ')') ++balance;
-    if (string[i] == '(') --balance;
+    bool left = false;
+    bool right = false;
+    char c = string[i];
+    printf("c: %c\n", c);
+    // Check for balanced parentheses
+    if (c == ')') ++balance;
+    if (c == '(') --balance;
+
+    // Check for invalid characters
+    if (!isOperator(c) && !isOperand(c) && c != ' ' && c != '\t' && c != '\n')
+      error(1, 0, "invalid character on line %i: [%c]", line_num, c);
+
+    // Check for left and right operands
+    // Cases: first & of AND, pipe, first | of OR, ;, <, >
+    if ((c == '&' && string[i-1] != '&')||
+        (c == '|' && string[i-1] != '|')|| 
+         c == ';' ||
+         c == '<' ||
+         c == '>')
+    { 
+      //printf("Entering checking for left and right\n");
+      // Check that it has left operands
+      int l;
+      for (l = i - 1; l != -1; --l)
+      {
+        if (isOperand(string[l])) 
+        {
+          left = true;
+          break;
+        }
+        if (isOperator(string[l]))
+        {
+          left = false;
+          error(1, 0, "found %c after %c without operand in between on line %d", c, string[l], line_num);
+        }
+      }
+      if (!left) error(1, 0, "missing left operand for %c on line %i\n", 
+                                                    c, line_num);
+      // Check that it has right operands
+      int r;
+      // Skip over second & and | of AND and OR
+      if (c == '&' || string[i+1] == '|') r = i + 2;
+      else r = i + 1;
+      for (; r < len; ++r)
+      {
+        if (isOperand(string[r])) 
+        {
+          right = true;
+          break;
+        }
+        if (isOperator(string[r]))
+        {
+          right = false;
+          error(1, 0, "found %c after %c without operand in between on line %d", string[r], c, line_num);
+        }
+      }
+      if (!right) error(1, 0, "missing right operand for %c on line %i\n", 
+                                                    c, line_num);
+    }
   }
+
   if (balance != 0)
     error(1, 0, "unmatched parenthesis on line %i\n", line_num);
-  
-  //check for invalid characters
-  for (i = 0; i < len; ++i)
-  {
-    char c = string[i];
-
-    if (isOperator(c) || isOperand(c) || c == ' ' || c == '\t' || c == '\n') continue;
-    else error(1, 0, "invalid character on line %i: [%c]", line_num, c);
-  }
-
-  //check for double/triple operators
+/*
+///////////////////////////////////////////////////////////////////////////////////
+  // Check for double/triple operators
   char* ops = "<>|&;";
   for (i = 0; i < (int)strlen(ops); ++i)
   {
@@ -137,7 +190,7 @@ void validate(char* string, int line_num) {
     }
   }
 
-  //check that all operators have operands
+  // Check that all operators have operands
   for (i = 0; i < len; ++i)
   {
     bool left = false;
@@ -148,9 +201,8 @@ void validate(char* string, int line_num) {
         ((c == '&' && string[i-1] != '&') || ((c == '|' && string[i-1] != '|') ||
                                              (c != '|' && c != '&' && c != ';'))))
     {
-      //check that it has left operands
+      // Check that it has left operands
       int j;
-      //left
       for (j = i - 1; j != -1; --j)
       {
         //printf("string[%d]: <%c>\n", j, string[j]);
@@ -178,9 +230,8 @@ void validate(char* string, int line_num) {
         ((c == '&' && string[i-1] == '&') || ((c == '|' && string[i-1] == '|') ||
                                              (c != '|' && c != '&' && c != ';'))))
     {
-      //check that it has right operands
+      // Check that it has right operands
       int j;
-      //left
       for (j = i + 1; j < len; ++j)
       {
         if (isOperand(string[j])) 
@@ -199,12 +250,11 @@ void validate(char* string, int line_num) {
                                                     c, line_num);
     }
   }
-
-};
+*/
+}
 
 /* Builds a string from file stream */
 
-//TODO: be sure it handles newline's well
 char* buildString(int (*get_next_byte) (void *),
 		     void *get_next_byte_argument)
 {
@@ -419,11 +469,10 @@ make_command_stream (int (*get_next_byte) (void *),
   char* end = string + strlen(string) - 1;
     
   int nLines = line_nums(string, end);
-  int i;
+  //int i = 0;
   char* a = string;
   char* b;
 
-  i = 0;
   char* beforeComment = a;
   int lineNum = 1;
   bool foundOp = false;
@@ -474,7 +523,7 @@ if (foundComment) printf("*******************foundComment = true\n"); else print
          error(1, 0, "Cannot start with & on line: %d\n", lineNum);
 
        // Check to make sure not last character
-       if (i == (int)(strlen(string) - 1) && *(b-1) != '&')
+       if (b == end && *(b-1) != '&')
          error(1, 0, "Missing second & on line: %d\n", lineNum);
        // Check for second &
        else if (*(b+1) != '&' && *(b-1) != '&')
