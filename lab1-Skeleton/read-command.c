@@ -2,7 +2,6 @@
 
 /* 
   TODO: input/output
-        f|______
 */
 
 #include "command.h"
@@ -100,8 +99,10 @@ void validate(char* string, int line_num) {
   //puts(string);
   const char* end = string + len;
   int balance = 0;
+  // Currently line is the last line number of the string
   int line = line_num;
 
+  // Reset line number
   for (i = 0; i < len; ++i)
     if (string[i] == '\n') --line;
 
