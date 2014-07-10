@@ -234,19 +234,15 @@ char* buildString(int (*get_next_byte) (void *),
 
 char* get_opt_ptr(char* beg, char* end)
 {
-  puts(beg);
   char* seq = NULL;
   char* andor = NULL;
   char* pipe = NULL;
   char* paren = NULL; // closed paren )
   int paren_ctr = 0; // 0 => not inside parens
   char* ptr;
-  printf("beg of for\n");
   for (ptr = end; ptr >= beg; --ptr)
   {
-    printf("start of for\n");
     char c = *ptr;
-    printf("["); putchar(c); printf("]\n");
     if (paren_ctr == 0)
       switch (c) 
       {
@@ -263,16 +259,13 @@ char* get_opt_ptr(char* beg, char* end)
           if (!andor) andor = ptr;
           break;
       }
-    printf("hallo\n");
     if (c == ')' && !paren) paren = ptr;
-   printf("end of for\n");
   }
-  printf("out of the for\n");
-  if (seq) { printf("returning seq\n"); return seq;}
-  else if (andor)  { printf("returning andor\n"); return andor;}
-  else if (pipe) { printf("returning pipe\n"); return pipe;}
-  else if (paren)  { printf("returning paren\n"); return paren;}
-  else  { printf("returning beg\n"); return beg;}
+  if (seq) return seq;
+  else if (andor)  return andor;
+  else if (pipe) return pipe;
+  else if (paren) return paren;
+  else return beg;
 }
 
 command_t
@@ -293,10 +286,9 @@ make_command (char* beg, char* end, int line_num)
    * */
   
   //Check command type
-	printf("IN MAKE COMMAND\n");
   if (optPtr == beg)
   {
-	printf("DOING SIMPLE\n");
+	//printf("DOING SIMPLE\n");
     //TODO: deprecate
     if (isOperator(*optPtr)) 
       error(1, 0, "too few operands on line %i\n", line_num);
@@ -340,14 +332,14 @@ make_command (char* beg, char* end, int line_num)
   }
   else if (*optPtr == ';')
   {
-    printf("Making sequence command\n");
+    //printf("Making sequence command\n");
     com->type = SEQUENCE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == ')')
   {
-    printf("Making subshell command\n");
+    //printf("Making subshell command\n");
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
     while (*open != '(') ++open;
@@ -355,21 +347,21 @@ make_command (char* beg, char* end, int line_num)
   }
   else if (*optPtr == '|' && *(optPtr-1) != '|')
   {
-    printf("Making pipe command\n");
+    //printf("Making pipe command\n");
     com->type = PIPE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == '|')
   {
-    printf("Making OR command\n");
+    //printf("Making OR command\n");
     com->type = OR_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 2, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == '&')
   {
-    printf("Making AND command\n");
+    //printf("Making AND command\n");
     com->type = AND_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 2, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
