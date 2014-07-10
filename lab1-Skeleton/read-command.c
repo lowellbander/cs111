@@ -234,7 +234,6 @@ char* buildString(int (*get_next_byte) (void *),
 
 char* get_opt_ptr(char* beg, char* end)
 {
-  //puts(beg);
   char* seq = NULL;
   char* andor = NULL;
   char* pipe = NULL;
@@ -244,7 +243,6 @@ char* get_opt_ptr(char* beg, char* end)
   for (ptr = end; ptr >= beg; --ptr)
   {
     char c = *ptr;
-    //printf("["); putchar(c); printf("]\n");
     if (paren_ctr == 0)
       switch (c) 
       {
@@ -305,7 +303,6 @@ make_command (char* beg, char* end, int line_num)
    * */
   
   //Check command type
-  //printf("IN MAKE COMMAND\n");
   if (optPtr == beg)
   {
     //TODO: deprecate
