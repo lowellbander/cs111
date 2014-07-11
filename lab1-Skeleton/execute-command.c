@@ -35,10 +35,19 @@ int execute (command_t c)
       c->u.command[1]->status = execute(c->u.command[1]);
       break;
     }
+    case AND_COMMAND:
+    {
+      c->u.command[0]->status = execute(c->u.command[0]);
+      if (c->u.command[0]->status == 0)
+        c->u.command[1]->status = execute(c->u.command[1]);
+      break;
+    }
     default:
     {
-      printf("fell through switch\n");
-      break;
+      // should never happen
+      // could probably take this out
+      error(1, 0, "invalid command type\n");
+      break; // this line prob not necessary either
     }
   }
   return c->status;
