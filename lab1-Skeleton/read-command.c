@@ -217,6 +217,8 @@ char* buildString(int (*get_next_byte) (void *),
 
 char* get_opt_ptr(char* beg, char* end)
 {
+  // Make sure find operand before ; for sequence
+  bool foundRand = false;
   char* seq = NULL;
   char* andor = NULL;
   char* pipe = NULL;
@@ -230,7 +232,7 @@ char* get_opt_ptr(char* beg, char* end)
       switch (c) 
       {
         case ';':
-          if (!seq) seq = ptr;
+          if (!seq && foundRand) seq = ptr;
           break;
         case '|':
         case '&':
@@ -242,6 +244,8 @@ char* get_opt_ptr(char* beg, char* end)
           else if (*(ptr-1) != '|' && !pipe)
             pipe = ptr;          
           break;
+        default:
+          if (isOperand(c)) foundRand = true;
       }
     if (c == ')' && !paren) paren = ptr;
     if (c == ')') ++paren_ctr;
