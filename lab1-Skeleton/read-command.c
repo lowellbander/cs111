@@ -321,6 +321,69 @@ make_command (char* beg, char* end, int line_num)
     //if (!found_operand)
     //  error(1, 0, "No operands before ; on line: %d\n", line_num);
     *(com->u.word) = word;
+  
+    char* the_word = NULL;
+    char* input = NULL;
+    char* output = NULL;
+    bool found_input = false;
+    bool found_arrow = false;
+    bool found_io = false;
+    for (ptr = beg; ptr <= end; ++ptr)
+    {
+      if ((*ptr == '<' || *ptr == '>') && !found_arrow)
+      {
+        found_input = true;
+        the_word = copy(beg, ptr-1);
+        beg = ++ptr;
+      }
+      else if (found_io && (*ptr == ' ' || *ptr == '\t' || *ptr == '\n' || *ptr == '>'))
+      {
+        if (*(beg - 1) == '<') 
+        {
+          found_io = false;
+          found_arrow = false;
+          input = copy(beg, ptr - 1);
+          beg = ++ptr;
+        }
+        else if (*(beg - 1) == '>') 
+        {
+          found_io = false;
+          found_arrow = false;
+          output = copy(beg, ptr - 1);
+          beg = ++ptr;
+        }
+      }
+      else if (found_arrow && is_operand(*ptr))
+      {
+          found_io = true;
+      }
+    }
+    printf("word: %s\n", the_word);
+    printf("input: %s\n", input);
+    printf("output: %s\n", output);
+
+    /*
+    char* first = NULL;
+    char* second = NULL;
+    char* third = NULL;
+    for (ptr = beg; ptr <= end; ++ptr)
+    {
+      switch (*ptr)
+      {
+        case '<':
+        case '>':
+          if (!first)
+          {
+            first = copy (beg, ptr - 1);
+          }
+          else if (!second)
+          {
+            
+          }
+          break;
+      }
+    }
+  */
   }
   else if (*optPtr == ';')
   {
