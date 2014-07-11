@@ -1,9 +1,11 @@
 // UCLA CS 111 Lab 1 command execution
 
+#include "alloc.h"
 #include "command.h"
 #include "command-internals.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <error.h>
 
 /* FIXME: You may need to add #include directives, macro definitions,
@@ -49,12 +51,16 @@ int execute (command_t c)
         c->u.command[1]->status = execute(c->u.command[1]);
       break;
     }
-    default:
+    case PIPE_COMMAND:
     {
-      // should never happen
-      // could probably take this out
-      error(1, 0, "invalid command type\n");
-      break; // this line prob not necessary either
+      int len = sizeof(*(c->u.command[0]->u.word)) + sizeof(*(c->u.command[1]->u.word)) + 1;
+      char* word = checked_malloc(len);
+      printf("len: %i\n", len);
+      strcat(word, *(c->u.command[0]->u.word));
+      strcat(word, "|");
+      strcat(word, *(c->u.command[1]->u.word));
+      c->status = system(word);
+      break;
     }
   }
   return c->status;
@@ -68,6 +74,4 @@ execute_command (command_t c, int time_travel)
      You can also use external functions defined in the GNU C Library.  */
 
   execute(c);
-
-  error (1, 0, "command execution not yet implemented");
 }
