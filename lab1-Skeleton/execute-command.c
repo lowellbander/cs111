@@ -15,7 +15,21 @@ command_status (command_t c)
   return c->status;
 }
 
-//char* build_command_string()
+int execute (command_t c)
+{
+  switch (c->type)
+  {
+    case SIMPLE_COMMAND:
+    {
+      c->status = system(*(c->u.word));
+      break;
+    }
+    default:
+      printf("fell through switch");
+      break;
+  }
+  return c->status;
+}
 
 void
 execute_command (command_t c, int time_travel)
@@ -24,32 +38,7 @@ execute_command (command_t c, int time_travel)
      add auxiliary functions and otherwise modify the source code.
      You can also use external functions defined in the GNU C Library.  */
 
-  // traverse the command tree and execute commands with system()
-  //system("echo hello, world!");
-
-  switch(c->type)
-  {
-    case SIMPLE_COMMAND:
-    {
-      char* word = *(c->u.word);
-      printf("command: %s\n", word);
-      system(word);
-      break;
-    }
-    case AND_COMMAND:
-    case SEQUENCE_COMMAND:
-    case OR_COMMAND:
-    case PIPE_COMMAND:
-    {
-      printf("cases not handled\n");
-      break;
-    }
-    default:
-    {
-      printf("fell through swtich\n");
-      break;
-    }
-  }
+  execute(c);
 
   error (1, 0, "command execution not yet implemented");
 }
