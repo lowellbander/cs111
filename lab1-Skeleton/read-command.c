@@ -27,13 +27,60 @@ struct node
   node_t next;
 };						
 
+/* Creates new string from old without 
+   leading, extra, or trailing white spaces */
+
 char* delete_white(char* string)
 {
+  const int INC = 10;
+  size_t size = INC;
   char* new_string = checked_malloc(8*sizeof(char));
-  int len = strlen(string) - 1;
-  bool found_non_white = false;
+  int len = strlen(string);
+  bool found_beg = false;
+  int consec_space = 0;
+  // string's counter
+  int i;
+  // new_string's counter
+  int n = 0;
+  for (i = 0; i < len; ++i)
+  {
+    char c = string[i];
+    // Get rid of leading
+    if (c != ' ' && c != '\t' && c != '\n')
+    {
+      found_beg = true;
+      if (strlen(new_string) >= size) 
+        string = checked_grow_alloc(string, &size);
+       new_string[n] = c;
+       ++n;
+    }
+    else if (found_beg && (c == ' ' || c== '\t' || c == '\n'))
+    {
+      ++consec_space;
+      // Skip over extra white spaces
+      if (consec_space == 1)
+      {
+        if (strlen(new_string) >= size) 
+          string = checked_grow_alloc(string, &size);
+        new_string[n] = ' ';
+        ++n;
+      }
+    } 
+  }
   
-
+  // Null terminate string
+  // Check if last inputted character is white space
+  if (new_string[n-1] == ' ')
+  {
+    new_string[n-1] = '\0';
+  }
+  else
+  {
+    if (strlen(new_string) >= size) 
+      string = checked_grow_alloc(string, &size);
+    new_string[n] = '\0';
+    ++n;
+  }
   return new_string;
 }
 
@@ -188,7 +235,7 @@ void validate(char* string, int line_num) {
       }
     }
   }
-
+  // Check parenthesis balance
   if (balance != 0)
     error(1, 0, "unmatched parenthesis on line %i\n", line);
 }
@@ -390,11 +437,15 @@ make_command (char* beg, char* end, int line_num)
           output = copy(beg, ptr);
         }
     } 
-  
-    printf("word: %s\n", the_word);
-    printf("input: %s\n", input);
-    printf("output: %s\n", output);
-
+    the_word = delete_white(the_word);
+    input = delete_white(input);
+    output = delete_white(output);
+    printf("word: [%s]\n", the_word);
+    printf("input: [%s]\n", input);
+    printf("output: [%s]\n", output);
+    *(com->u.word) = the_word;
+    com->input = input;
+    com->output = output;
     /*
     char* first = NULL;
     char* second = NULL;
