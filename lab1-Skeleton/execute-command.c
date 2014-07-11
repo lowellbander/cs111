@@ -42,6 +42,13 @@ int execute (command_t c)
         c->u.command[1]->status = execute(c->u.command[1]);
       break;
     }
+    case OR_COMMAND:
+    {
+      c->u.command[0]->status = execute(c->u.command[0]);
+      if (c->u.command[0]->status != 0)
+        c->u.command[1]->status = execute(c->u.command[1]);
+      break;
+    }
     default:
     {
       // should never happen
