@@ -24,9 +24,17 @@ int execute (command_t c)
       c->status = system(*(c->u.word));
       break;
     }
-    default:
-      printf("fell through switch");
+    case SEQUENCE_COMMAND:
+    {
+      c->u.command[0]->status = execute(c->u.command[0]);
+      c->u.command[1]->status = execute(c->u.command[1]);
       break;
+    }
+    default:
+    {
+      printf("fell through switch\n");
+      break;
+    }
   }
   return c->status;
 }
