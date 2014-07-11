@@ -25,24 +25,24 @@ struct node
 {
   command_t self;
   node_t next;
-};
+};						
 
 char* copy(char* beg, char* end)
 {
   int size = end - beg;
   char* string = checked_malloc(size+1);
   int i = 0;
-  int numSpace = 0;
+  int num_space = 0;
 
   while (beg != end)
   {
     if (*beg == ' ' || *beg == '\t')
-      numSpace++;
+      num_space++;
     else
-      numSpace = 0;
+      num_space = 0;
 
     // Skip extra white spaces in between
-    if (numSpace <= 1)
+    if (num_space <= 1)
     {
       string[i] = *beg;
       ++i;
@@ -58,7 +58,7 @@ char* copy(char* beg, char* end)
   return string;
 }
 
-bool isOperator(char c)
+bool is_operator(char c)
 {
   if (c == '|' || c == '&' || c == ';' || c == '<' || c == '>')
     return true;
@@ -66,7 +66,7 @@ bool isOperator(char c)
     return false;
 }
 
-bool isSpecial(char c) 
+bool is_special(char c) 
 {
   if (c == '(' ||
       c == ')' ||
@@ -85,9 +85,9 @@ bool isSpecial(char c)
     else return false;
 }
 
-bool isOperand(char c) 
+bool is_operand(char c) 
 {
-  if (isalpha(c) || isdigit(c) || isSpecial(c)) return true;
+  if (isalpha(c) || isdigit(c) || is_special(c)) return true;
   else return false;
 }
 
@@ -123,7 +123,7 @@ void validate(char* string, int line_num) {
     if (balance < 0) error(1, 0, "mismatching parentheses on line %d", line);
 
     // Check for invalid characters
-    if (!isOperator(c) && !isOperand(c) && c != ' ' && c != '\t' && c != '\n')
+    if (!is_operator(c) && !is_operand(c) && c != ' ' && c != '\t' && c != '\n')
       error(1, 0, "invalid character on line %i: [%c]", line, c);
 
     // Check for left and right operands
@@ -139,12 +139,12 @@ void validate(char* string, int line_num) {
       int l;
       for (l = i - 1; l != -1; --l)
       {
-        if (isOperand(string[l])) 
+        if (is_operand(string[l])) 
         {
           left = true;
           break;
         }
-        if (isOperator(string[l]))
+        if (is_operator(string[l]))
         {
           left = false;
           error(1, 0, "found %c after %c without operand in between on line %d", c, string[l], line);
@@ -158,12 +158,12 @@ void validate(char* string, int line_num) {
       else r = i + 1;
       for (; r < len; ++r)
       {
-        if (isOperand(string[r])) 
+        if (is_operand(string[r])) 
         {
           right = true;
           break;
         }
-        if (isOperator(string[r]))
+        if (is_operator(string[r]))
         {
           right = false;
           error(1, 0, "found %c after %c without operand in between on line %d", string[r], c, line);
@@ -187,7 +187,7 @@ void validate(char* string, int line_num) {
 
 /* Builds a string from file stream */
 
-char* buildString(int (*get_next_byte) (void *),
+char* build_string(int (*get_next_byte) (void *),
 		     void *get_next_byte_argument)
 {
   const int INC = 10;
@@ -213,12 +213,13 @@ char* buildString(int (*get_next_byte) (void *),
   return string;
 }
 
-/* Gets the pointer to relevant operator */
+/* Given the beginning and end of string,
+   return the pointer to relevant operator */
 
 char* get_opt_ptr(char* beg, char* end)
 {
   // Make sure find operand before ; for sequence
-  bool foundRand = false;
+  bool found_operand = false;
   char* seq = NULL;
   char* andor = NULL;
   char* pipe = NULL;
@@ -229,10 +230,11 @@ char* get_opt_ptr(char* beg, char* end)
   {
     char c = *ptr;
     if (paren_ctr == 0)
+    {
       switch (c) 
       {
         case ';':
-          if (!seq && foundRand) seq = ptr;
+          if (!seq && found_operand) seq = ptr;
           break;
         case '|':
         case '&':
@@ -245,8 +247,9 @@ char* get_opt_ptr(char* beg, char* end)
             pipe = ptr;          
           break;
         default:
-          if (isOperand(c)) foundRand = true;
+          if (is_operand(c)) found_operand = true;
       }
+    }
     if (c == ')' && !paren) paren = ptr;
     if (c == ')') ++paren_ctr;
     if (c == '(') --paren_ctr;
@@ -279,7 +282,7 @@ make_command (char* beg, char* end, int line_num)
   if (optPtr == beg)
   {
     //TODO: deprecate
-    if (isOperator(*optPtr)) 
+    if (is_operator(*optPtr)) 
       error(1, 0, "too few operands on line %i\n", line_num);
 
     com->type = SIMPLE_COMMAND;
@@ -288,13 +291,13 @@ make_command (char* beg, char* end, int line_num)
     //printf("word: <"); puts(word); printf(">\n"); printf("length: %d\n", strlen(word));
     char* ptr;
 
-    bool foundOperand = false;
+    bool found_operand = false;
     for (ptr = beg; ptr <= end; ++ptr)
     {
       //printf("Getting rid of leading\n");
-      if (isOperand(*ptr) || isSpecial(*ptr)) 
+      if (is_operand(*ptr) || is_special(*ptr)) 
       {
-        foundOperand = true;
+        found_operand = true;
         beg = ptr;
         word = copy(beg, end);
         break;
@@ -304,7 +307,7 @@ make_command (char* beg, char* end, int line_num)
     for (ptr = end; ptr >= beg; --ptr)
     {
       //printf("Getting rid of trailing\n");
-      if (isOperand(*ptr) || isSpecial(*ptr)) 
+      if (is_operand(*ptr) || is_special(*ptr)) 
       {
         end = ++ptr;
         word = copy(beg, end);
@@ -315,7 +318,7 @@ make_command (char* beg, char* end, int line_num)
     //printf("Making simple command: <");
     //puts(word);
     //printf(">\n");
-    //if (!foundOperand)
+    //if (!found_operand)
     //  error(1, 0, "No operands before ; on line: %d\n", line_num);
     *(com->u.word) = word;
   }
@@ -361,15 +364,15 @@ make_command (char* beg, char* end, int line_num)
 
 int line_nums(char* beg, char* end)
 {
-  int nLines = 1;
+  int num_lines = 1;
   char* ptr = beg;
   while (ptr != end)
   {
     if (*ptr == '\n')
-      ++nLines;
+      ++num_lines;
     ++ptr;
   }
-  return nLines;
+  return num_lines;
 }
 
 void push(command_stream_t stream, command_t com)
@@ -400,33 +403,36 @@ make_command_stream (int (*get_next_byte) (void *),
 {
   command_stream_t stream = checked_malloc(sizeof(struct command_stream));
 
-  char* string = buildString(get_next_byte, get_next_byte_argument);
+  char* string = build_string(get_next_byte, get_next_byte_argument);
 
   char* end = string + strlen(string) - 1;
     
-  int nLines = line_nums(string, end);
   //int i = 0;
   char* a = string;
   char* b;
 
-  char* beforeComment = a;
-  int lineNum = 1;
-  bool foundOp = false;
-  bool finishedCommand = false;
-  bool foundBegCommand = false;
-  bool foundComment = false;
+  char* before_comment = a;
+  int line_num = 1;
+  // Keep track if last non-white character was operator
+  bool found_operator = false;
+  // Keep track if finished last command or still reading command
+  bool finished_command = false;
+  // Keep track if found first command in whole script
+  bool found_beg_command = false;
+  // Keep track if reading comment
+  bool found_comment = false;
   b = a;
  
   while (b <= end)
   { 
     //printf("b: <%c>\n", *b);
-/*if (foundOp) printf("foundOp = true\n"); else printf("foundOp = false\n");
-if (finishedCommand) printf("finishedCommand = true\n"); else printf("finishedCommand = false\n");
-if (foundBegCommand) printf("foundBegCommand = true\n"); else printf("foundBegCommand = false\n");
-if (foundComment) printf("*******************foundComment = true\n"); else printf("foundComment = false\n");*/
+/*if (found_operator) printf("found_operator = true\n"); else printf("found_operator = false\n");
+if (finished_command) printf("finished_command = true\n"); else printf("finished_command = false\n");
+if (found_beg_command) printf("found_beg_command = true\n"); else printf("found_beg_command = false\n");
+if (found_comment) printf("*******************found_comment = true\n"); else printf("found_comment = false\n");*/
      // Skip over comments
-     if (isOperator(*b) && !foundBegCommand)
-       error(1, 0, "Line %d may not start with operator", lineNum);
+     if (is_operator(*b) && !found_beg_command)
+       error(1, 0, "Line %d may not start with operator", line_num);
      if (*b == '#')
      {
        // If not first character
@@ -445,100 +451,100 @@ if (foundComment) printf("*******************foundComment = true\n"); else print
              *(b-1) == '@' ||
              *(b-1) == '^' ||
              *(b-1) == '_')
-           error(1, 0, "invalid character # at line: %d\n", lineNum);
-         else foundComment = true;
+           error(1, 0, "invalid character # at line: %d\n", line_num);
+         else found_comment = true;
        }
-       foundComment = true;
-       beforeComment = b - 1;
+       found_comment = true;
+       before_comment = b - 1;
      }
      //printf("b: <%c>\n", *b);
      else if (*b == '&')
      {
        // Check for beggining with operand
-       if (finishedCommand && !foundComment)
-         error(1, 0, "Cannot start with & on line: %d\n", lineNum);
+       if (finished_command && !found_comment)
+         error(1, 0, "Cannot start with & on line: %d\n", line_num);
 
        // Check to make sure not last character
        if (b == end && *(b-1) != '&')
-         error(1, 0, "Missing second & on line: %d\n", lineNum);
+         error(1, 0, "Missing second & on line: %d\n", line_num);
        // Check for second &
        else if (*(b+1) != '&' && *(b-1) != '&')
-         error(1, 0, "Missing second & on line: %d\n", lineNum);
-       else if (!foundComment)
-         foundOp = true;
+         error(1, 0, "Missing second & on line: %d\n", line_num);
+       else if (!found_comment)
+         found_operator = true;
      }
      else if (*b == '|')
      {
        // Check for beginnning with operand
-       if (finishedCommand && !foundComment)
-         error(1, 0, "Cannot start with | on line: %d\n", lineNum);
-       else if (!foundComment)
-         foundOp = true;
+       if (finished_command && !found_comment)
+         error(1, 0, "Cannot start with | on line: %d\n", line_num);
+       else if (!found_comment)
+         found_operator = true;
      }
      else if (*b == '\n')
      {
-        ++lineNum;
+        ++line_num;
         
         // Found end of complete command
-        if (!foundOp && foundBegCommand && !foundComment)
+        if (!found_operator && found_beg_command && !found_comment)
         {
           //printf("Found end of complete command\n");
-          char* tempString = checked_malloc(sizeof(copy(a, b+1)));
-          tempString = copy(a, b+1);
-          //puts(tempString);
-          validate(tempString, lineNum);
-          push(stream, make_command(tempString, 
-                                    tempString + (int)strlen(tempString), 
-                                    lineNum));
+          char* temp_string = checked_malloc(sizeof(copy(a, b+1)));
+          temp_string = copy(a, b+1);
+          //puts(temp_string);
+          validate(temp_string, line_num);
+          push(stream, make_command(temp_string, 
+                                    temp_string + (int)strlen(temp_string), 
+                                    line_num));
           a = b + 1;
-          finishedCommand = true;
-          foundOp = false;
-          foundBegCommand = false;
+          finished_command = true;
+          found_operator = false;
+          found_beg_command = false;
         }
-        else if (foundComment) 
+        else if (found_comment) 
         {
           // Found end of comment
-          foundComment = false;
+          found_comment = false;
           // End of comment, make command preceding it
-          if (foundBegCommand)
+          if (found_beg_command)
           {
             //printf("Found end of comment and making command!\n");
-            char* tempString = checked_malloc(sizeof(copy(a, beforeComment+1)));
-            tempString = copy(a, beforeComment+1);
-            validate(tempString, lineNum);
-            push(stream, make_command(tempString, 
-                                      tempString + (int)strlen(tempString), 
-                                      lineNum));
+            char* temp_string = checked_malloc(sizeof(copy(a, before_comment+1)));
+            temp_string = copy(a, before_comment+1);
+            validate(temp_string, line_num);
+            push(stream, make_command(temp_string, 
+                                      temp_string + (int)strlen(temp_string), 
+                                      line_num));
             a = b + 1;
-            finishedCommand = true;
-            foundOp = false;
-            foundBegCommand = false;
+            finished_command = true;
+            found_operator = false;
+            found_beg_command = false;
           }
           // Comment came after already made complete command
           else a = b;
         }
      }
-     else if (*b != ' ' && *b != '\t' && !foundComment)
+     else if (*b != ' ' && *b != '\t' && !found_comment)
      {
-       //printf("foundbegcommand\n");
-       finishedCommand = false;
-       foundOp = false;
-       foundBegCommand = true;
+       //printf("found_beg_command\n");
+       finished_command = false;
+       found_operator = false;
+       found_beg_command = true;
      }
      ++b;
   }
   
   // Check for unfinished commands
-  if (!finishedCommand)
+  if (!finished_command)
   {
-    char* tempString;
+    char* temp_string;
     //printf("Finishing command:\n");
-    tempString = copy(a, b+1);
-    //puts(tempString);
-    validate(tempString, lineNum);
-    push(stream, make_command(tempString,
-                              tempString + (int)strlen(tempString),
-                              lineNum));
+    temp_string = copy(a, b+1);
+    //puts(temp_string);
+    validate(temp_string, line_num);
+    push(stream, make_command(temp_string,
+                              temp_string + (int)strlen(temp_string),
+                              line_num));
   }
   
   return stream;
