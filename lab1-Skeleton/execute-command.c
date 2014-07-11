@@ -24,6 +24,11 @@ int execute (command_t c)
       c->status = system(*(c->u.word));
       break;
     }
+    case SUBSHELL_COMMAND:
+    {
+      c->u.subshell_command->status = execute(c->u.subshell_command);
+      break;
+    }
     case SEQUENCE_COMMAND:
     {
       c->u.command[0]->status = execute(c->u.command[0]);
