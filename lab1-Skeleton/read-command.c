@@ -27,6 +27,16 @@ struct node
   node_t next;
 };						
 
+char* delete_white(char* string)
+{
+  char* new_string = checked_malloc(8*sizeof(char));
+  int len = strlen(string) - 1;
+  bool found_non_white = false;
+  
+
+  return new_string;
+}
+
 char* copy(char* beg, char* end)
 {
   int size = end - beg;
@@ -130,9 +140,7 @@ void validate(char* string, int line_num) {
     // Cases: first & of AND, pipe, first | of OR, ;, <, >
     if ((c == '&' && string[i-1] != '&')||
         (c == '|' && string[i-1] != '|')|| 
-         c == ';' ||
-         c == '<' ||
-         c == '>')
+         c == ';')
     { 
       //printf("Entering checking for left and right\n");
       // Check that it has left operands
@@ -322,42 +330,67 @@ make_command (char* beg, char* end, int line_num)
     //  error(1, 0, "No operands before ; on line: %d\n", line_num);
     *(com->u.word) = word;
   
+    // Separate into input and output
     char* the_word = NULL;
     char* input = NULL;
     char* output = NULL;
-    bool found_input = false;
+    // Found > or <
     bool found_arrow = false;
+    // Found beginning of input or output
     bool found_io = false;
     for (ptr = beg; ptr <= end; ++ptr)
     {
+      //printf("****************\nbeg: %c\nptr: %c\n", *beg, *ptr);
+      // If found next > or <
       if ((*ptr == '<' || *ptr == '>') && !found_arrow)
       {
-        found_input = true;
-        the_word = copy(beg, ptr-1);
-        beg = ++ptr;
+        found_arrow = true;
+        if (!the_word)
+          the_word = copy(beg, ptr);
+        beg = ptr + 1;
       }
+      // If found end of input or output
       else if (found_io && (*ptr == ' ' || *ptr == '\t' || *ptr == '\n' || *ptr == '>'))
-      {
+      { 
+        if (*ptr == '>')
+          found_arrow = true;
+        else
+          found_arrow = false;
+
         if (*(beg - 1) == '<') 
         {
           found_io = false;
+          input = copy(beg, ptr);
+          beg = ptr + 1;
+        }
+        else if (*(beg - 1) == '>') 
+        {
+          printf("found output\n");
+          found_io = false;
+          output = copy(beg, ptr);
+          beg = ptr + 1;
+        }
+      }
+      else if (found_arrow && is_operand(*ptr))
+          found_io = true;
+    }
+    // Finish last input or output
+    if (found_io)
+    {
+      if (*(beg - 1) == '<') 
+        {
+          found_io = false;
           found_arrow = false;
-          input = copy(beg, ptr - 1);
-          beg = ++ptr;
+          input = copy(beg, ptr);
         }
         else if (*(beg - 1) == '>') 
         {
           found_io = false;
           found_arrow = false;
-          output = copy(beg, ptr - 1);
-          beg = ++ptr;
+          output = copy(beg, ptr);
         }
-      }
-      else if (found_arrow && is_operand(*ptr))
-      {
-          found_io = true;
-      }
-    }
+    } 
+  
     printf("word: %s\n", the_word);
     printf("input: %s\n", input);
     printf("output: %s\n", output);
