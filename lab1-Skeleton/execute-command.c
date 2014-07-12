@@ -23,7 +23,20 @@ int execute (command_t c)
   {
     case SIMPLE_COMMAND:
     {
-      c->status = system(*(c->u.word));
+      int len = sizeof(*(c->u.word)) + sizeof(*(c->input)) + sizeof(*(c->output)) + 2;
+      char* word = checked_malloc(len);
+      strcat(word, *(c->u.command[0]->u.word));
+      if (c->input != NULL)
+      {
+        strcat(word, "<");
+        strcat(word, c->input);
+      }
+      if (c->output != NULL)
+      {
+        strcat(word, ">");
+        strcat(word, c->output);
+      }
+      c->status = system(word);
       break;
     }
     case SUBSHELL_COMMAND:
