@@ -49,6 +49,7 @@ char* delete_white(char* string)
     if (c != ' ' && c != '\t' && c != '\n')
     {
       found_beg = true;
+      consec_space = 0;
       if (strlen(new_string) >= size) 
         string = checked_grow_alloc(string, &size);
        new_string[n] = c;
@@ -153,7 +154,6 @@ void validate(char* string, int line_num) {
   int i;
   int len = strlen(string);
   //printf("length: %d\n", len);
-  //puts(string);
   const char* end = string + len;
   int balance = 0;
   // Currently line is the last line number of the string
@@ -163,12 +163,13 @@ void validate(char* string, int line_num) {
   for (i = 0; i < len; ++i)
     if (string[i] == '\n') --line;
 
+  bool found_arrow = false;
   for (i = 0; i < len; ++i)
   {
     bool left = false;
     bool right = false;
     char c = string[i];
-    //printf("c: %c\n", c);
+    //printf("c: [%c]\n", c);
     //printf("line: %d\n", line);
 
     // Keep track of line number
@@ -183,12 +184,61 @@ void validate(char* string, int line_num) {
     if (!is_operator(c) && !is_operand(c) && c != ' ' && c != '\t' && c != '\n')
       error(1, 0, "invalid character on line %i: [%c]", line, c);
 
+    // Check for left and right operands for > and <
+    // Valid cases: a<b>c, d<e, f>g 
+    // Invalid cases: a>b<c, a<b<c, a>b>c
+    if (c == '<' || c == '>')
+    {
+      //printf("Found arrow: %c\n", c);
+      // Whether beginning of operand was found
+      int l;
+      // Check for left operand
+      for (l = i - 1; l != -1; --l)
+      {
+        //printf("****************\nstring[l]: [%c]\n", string[l]);
+        //if (left) printf("left = true\n"); else printf("left = false\n");
+
+        if (is_operand(string[l])) 
+          left = true;
+        else if (is_operator(string[l]) && !left)
+          error(1, 0, "found %c after %c without operand in between on line: %d", c, string[l], line);
+        // Break once find beg of simple command
+        else if (left && ((is_operator(string[l]) && 
+                          string[l] != '<' && 
+                          string[l] != '>') || string[l] == '\n')) break;
+  
+        // Check for a<b<c, a>b>c, a>b<c
+        if (string[l] == '>' || (string[l] == '<' && c == '<'))
+          error(1, 0, "can not have %c before %c on line: %d", string[l], c, line);
+        // a<b>c is okay
+        else if (string[l] == '<' && c == '>') break;
+      }
+
+      if (!left)
+        error(1, 0, "missing left operand for %c on line %d", c, line);
+      int r;
+      // Check for right operand
+      for (r = i + 1; r < len; ++r)
+      {
+        if (is_operand(string[r])) 
+          right = true;
+     
+        if (is_operator(string[r]) && !right)
+          error(1, 0, "found %c after %c without operand in between on line: %d", string[r], c, line);
+        
+        // found end of simple command
+        if (right && (is_operator(string[r]) || string[r] == '\n')) break;
+      }
+    }
+
     // Check for left and right operands
-    // Cases: first & of AND, pipe, first | of OR, ;, <, >
+    // Cases: first & of AND, pipe, first | of OR, ;
     if ((c == '&' && string[i-1] != '&')||
         (c == '|' && string[i-1] != '|')|| 
          c == ';')
     { 
+      left = false;
+      right = false;
       //printf("Entering checking for left and right\n");
       // Check that it has left operands
       int l;
@@ -397,7 +447,7 @@ make_command (char* beg, char* end, int line_num)
         beg = ptr + 1;
       }
       // If found end of input or output
-      else if (found_io && (*ptr == ' ' || *ptr == '\t' || *ptr == '\n' || *ptr == '>'))
+      else if (found_io && is_operator(*ptr))
       { 
         if (*ptr == '>')
           found_arrow = true;
@@ -412,7 +462,7 @@ make_command (char* beg, char* end, int line_num)
         }
         else if (*(beg - 1) == '>') 
         {
-          printf("found output\n");
+          //printf("found output\n");
           found_io = false;
           output = copy(beg, ptr);
           beg = ptr + 1;
@@ -437,37 +487,22 @@ make_command (char* beg, char* end, int line_num)
           output = copy(beg, ptr);
         }
     } 
-    the_word = delete_white(the_word);
-    input = delete_white(input);
-    output = delete_white(output);
-    printf("word: [%s]\n", the_word);
-    printf("input: [%s]\n", input);
-    printf("output: [%s]\n", output);
-    *(com->u.word) = the_word;
-    com->input = input;
-    com->output = output;
-    /*
-    char* first = NULL;
-    char* second = NULL;
-    char* third = NULL;
-    for (ptr = beg; ptr <= end; ++ptr)
+    
+    if (the_word != NULL)
     {
-      switch (*ptr)
-      {
-        case '<':
-        case '>':
-          if (!first)
-          {
-            first = copy (beg, ptr - 1);
-          }
-          else if (!second)
-          {
-            
-          }
-          break;
-      }
+      *(com->u.word) = delete_white(the_word);
+      //printf("word: [%s]\n", the_word);
     }
-  */
+    if (input != NULL)
+    {
+      com->input = delete_white(input);
+      //printf("input: [%s]\n", input);
+    }
+    if (output != NULL)
+    {
+      com->output = delete_white(output);
+      //printf("output: [%s]\n", output);
+    }
   }
   else if (*optPtr == ';')
   {
