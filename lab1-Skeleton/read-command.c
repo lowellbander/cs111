@@ -370,9 +370,9 @@ make_command (char* beg, char* end, int line_num)
       }
       //else printf("skipiping over: <%c>\n", *ptr);
     }
-    //printf("Making simple command: <");
+    //printf("Making simple command: [");
     //puts(word);
-    //printf(">\n");
+    //printf("]\n");
     //if (!found_operand)
     //  error(1, 0, "No operands before ; on line: %d\n", line_num);
     *(com->u.word) = word;
@@ -412,7 +412,7 @@ make_command (char* beg, char* end, int line_num)
         }
         else if (*(beg - 1) == '>') 
         {
-          printf("found output\n");
+          //printf("found output\n");
           found_io = false;
           output = copy(beg, ptr);
           beg = ptr + 1;
@@ -437,37 +437,27 @@ make_command (char* beg, char* end, int line_num)
           output = copy(beg, ptr);
         }
     } 
-    the_word = delete_white(the_word);
-    input = delete_white(input);
-    output = delete_white(output);
-    printf("word: [%s]\n", the_word);
-    printf("input: [%s]\n", input);
-    printf("output: [%s]\n", output);
-    *(com->u.word) = the_word;
-    com->input = input;
-    com->output = output;
-    /*
-    char* first = NULL;
-    char* second = NULL;
-    char* third = NULL;
-    for (ptr = beg; ptr <= end; ++ptr)
-    {
-      switch (*ptr)
-      {
-        case '<':
-        case '>':
-          if (!first)
-          {
-            first = copy (beg, ptr - 1);
-          }
-          else if (!second)
-          {
-            
-          }
-          break;
-      }
+    
+    if (the_word != NULL)
+    { 
+      the_word = delete_white(the_word);
+      *(com->u.word) = the_word;
+      //puts(the_word);
     }
-  */
+    if (input != NULL)
+    {
+      //printf("input not null!\n");
+      input = delete_white(input);
+      //puts(input);
+      com->input = input;
+    }
+    if (output != NULL)
+    {
+      //printf("output not null!\n");
+      output = delete_white(output);
+      //puts(output);
+      com->output = output;
+    }
   }
   else if (*optPtr == ';')
   {
