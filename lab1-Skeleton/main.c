@@ -61,7 +61,7 @@ main (int argc, char **argv)
 	  printf ("# %d\n", command_number++);
 	  print_command (command);
 	}
-      else if (time_travel == 0)
+      else
 	{
 	  last_command = command;
 	  execute_command (command, time_travel);
