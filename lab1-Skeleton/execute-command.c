@@ -118,3 +118,18 @@ execute_command (command_t c, int time_travel)
   if (time_travel == 0)
     system(build_sys_string(c));
 }
+
+void
+exe_stream (command_stream_t stream, int time_travel)
+{
+  if (time_travel == 0)
+  {
+    command_t command;
+    while ((command = read_command_stream(stream)))
+      execute_command(command, time_travel);
+  }
+  else
+  {
+    error(1, 0, "time travel not yet implemented\n");
+  }
+}
