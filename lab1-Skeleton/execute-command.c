@@ -3,6 +3,7 @@
 #include "alloc.h"
 #include "command.h"
 #include "command-internals.h"
+#include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -119,6 +120,12 @@ execute_command (command_t c, int time_travel)
     system(build_sys_string(c));
 }
 
+void* hello(void* void_ptr)
+{
+  printf("hello, world!\n");
+  return NULL;
+}
+
 void
 exe_stream (command_stream_t stream, int time_travel)
 {
@@ -130,10 +137,12 @@ exe_stream (command_stream_t stream, int time_travel)
   }
   else
   {
-    error(1, 0, "time travel not yet implemented\n");
     //group together the commands by dependencies, possible into command streams
     //then execute each command stream in it's own thread
 
-    //first, just try executing the normal command using a pthread()
+    pthread_t t1;
+    pthread_create(&t1, NULL, &hello, NULL);
+    pthread_join(t1, NULL);
+    error(1, 0, "time travel not yet implemented\n");
   }
 }
