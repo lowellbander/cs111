@@ -131,5 +131,9 @@ exe_stream (command_stream_t stream, int time_travel)
   else
   {
     error(1, 0, "time travel not yet implemented\n");
+    //group together the commands by dependencies, possible into command streams
+    //then execute each command stream in it's own thread
+
+    //first, just try executing the normal command using a pthread()
   }
 }
