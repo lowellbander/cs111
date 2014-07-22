@@ -25,7 +25,7 @@ int execute (command_t c)
     {
       int len = sizeof(*(c->u.word)) + sizeof(*(c->input)) + sizeof(*(c->output)) + 2;
       char* word = checked_malloc(len);
-      strcat(word, *(c->u.command[0]->u.word));
+      strcat(word, *(c->u.word));
       if (c->input != NULL)
       {
         strcat(word, "<");
