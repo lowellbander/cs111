@@ -1,0 +1,44 @@
+\documentclass{article}
+
+\usepackage[margin=0.7in]{geometry}
+
+\title{Design Project Proposal \\ CS 111, Summer 2014}
+\author{Lowell Bander, UID 204 156 534 \\
+Nicole Yee, UID 403 796 037}
+
+\begin{document}
+\maketitle
+	
+We are interested in doing the last design project listed for Lab 1C:\\
+
+\textit{Limit the amount of parallelism to at most N subprocesses, where N is a parameter that you can set by an argument to the shell. }\\
+
+\textit{Currently, our implementation of Lab 1C makes as many threads as possible to parallelize. If there are X independent processes, X threads are created. In this design project, we will allow the user to dictate the maximum amount of threads that may be created to parallelize.}
+\\
+
+There are three main goals for this project. \\
+
+\section{Set up}
+\textit{Date to complete by: July 29th} \\
+
+The first goal is to change the code main.c so that it may accept an argument N, representing the maximum subprocesses to run in parallel. This requires changing the switch statement in main() to recognize this additional argument. The argument N must also be passed to the execute command. A README file documenting how to execute and test this project with argument N will also be included. \\
+
+\section{Change \texttt{execute.c}}
+
+The second milestone is to limit the amount of threads created to N in execute.c. This requires keeping a count of the number of threads created, stopping once N threads have been created. A new thread created is only after a currently running thread terminates, effectively replacing the finished thread.
+\begin{enumerate}
+\item Keep a counter of number of threads created and stop creating threads after N threads created.
+\begin{itemize}
+\item \textit{Date to complete by: July 31st}
+\end{itemize}¥
+\item Restart the process of creating more threads after previous threads have completed. 
+\begin{itemize}
+\item \textit{Date to complete by: August 2nd}
+\end{itemize}¥
+\end{enumerate}¥
+\section{Test/Debug}
+\textit{Date to complete by: August 4th} \\
+
+The last milestone is to polish the code, debugging as necessary.
+
+\end{document}
