@@ -1,5 +1,13 @@
 Lowell Bander, UID 204 156 534
 Nicole Yee, UID 403 796 037
 
-Our code improperly handles nested subshell commands in some cases, doesn't trim
-whitespace properly, and ignores the i/o attributes of the command struct.
+We did parallel/parrot programming when possible. 
+Because we vastly different schedules, one of us would work on the code and push
+to gitHub while the other person would be sleeping. 
+We would pick up where the other left off, either debugging or begin adding the 
+next feature. Almost all of the sections of code were either co-written 
+or debugged by both of us.
+
+Currently our program passes all of the test cases with make check. While 
+execution has been implemented, it has not been thoroughly tested.
+
