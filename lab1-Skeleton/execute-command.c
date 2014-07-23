@@ -49,7 +49,7 @@ struct cmd_node
   cmd_node_t prev;
   file_stream_t depends;
   // id of cmd_nodes it is dependent on, end of array = 0
-  // After cmd_node id finishes, id is negative
+  // After cmd_node id finishes, id turns negative
   int* depend_id;
 };		
 
