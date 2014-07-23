@@ -9,9 +9,6 @@
 #include <string.h>
 #include <error.h>
 
-/* FIXME: You may need to add #include directives, macro definitions,
-   static function definitions, etc.  */
-   
 typedef struct file_stream *file_stream_t;
 typedef struct file_node *file_node_t;
 
