@@ -37,18 +37,101 @@ struct cmd_stream
 {
   cmd_node_t head;
   cmd_node_t curr;
+  cmd_node_t tail;
 };
 
 struct cmd_node
 {
+  // id starts at 1
   int id;
   command_t self;
   cmd_node_t next;
   cmd_node_t prev;
   file_stream_t depends;
-  // id of cmd_ntoes it is dependent on, end of array = -1
+  // id of cmd_nodes it is dependent on, end of array = 0
+  // After cmd_node id finishes, id is negative
   int* depend_id;
 };		
+
+void input_dependencies (cmd_stream_t stream)
+{
+  const int INC = 10;
+  size_t size = INC;
+  // TODO: Figure out how to grow alloc
+  
+  stream->curr = stream->tail;
+  cmd_node_t current = stream->curr;
+  cmd_node_t ptr;
+  // Loop through each complete command in stream
+  // Starts at tail of stream and goes backwards
+  while (current != NULL)
+  {
+    //printf ("While current != NULL-------------------\n");
+    int* ids = checked_malloc(size*sizeof(int));
+    int id_size = 0;
+    ids[0] = 0; 
+    ptr = stream->head;
+
+    // Check each file dependency 
+    if (current->depends != NULL)
+    {
+      current->depends->curr = current->depends->head;
+      file_node_t ptr0 = current->depends->curr;
+      
+      // Go through each file in current command
+      while (ptr0 != NULL)
+      {
+        //printf("Going through each file in current command\n");
+        ptr = stream->head;
+        // Go through each previous command
+        while (ptr != current)
+        {
+          //printf("Going through each previous command\n");
+          
+          // Go through each file in this previous command 
+          if (ptr->depends != NULL)
+          {
+            //printf("Going through each file in previous command\n");
+            
+            ptr->depends->curr = ptr->depends->head;
+            while (ptr->depends->curr != NULL)
+            {
+              //printf("Comparing files\n");
+              // Found dependent file
+              //printf("[%s] - - [%s]\n", ptr0->name, ptr->depends->curr->name);
+              if (strcmp(ptr0->name, ptr->depends->curr->name) == 0)
+              {
+                //printf("TWINSIES!\n");
+                if (id_size >= (int) size)
+                  ids = checked_grow_alloc(ids, &size);
+                ids[id_size] = ptr->id;
+                ++id_size;
+              }
+              ptr->depends->curr = ptr->depends->curr->next;
+            }
+          }
+          ptr = ptr->next;
+        }
+        ptr0 = ptr0->next;
+      }
+    }
+    //printf("break5\n");
+    current->depend_id = checked_malloc(sizeof(ids));
+    current->depend_id = ids;
+    //printf("break6\n");
+    // End int array with signal bit (0 can never be an id)
+    ids[id_size] = 0;
+    //printf("Inputted ID list\n");
+    //int x = 0;
+    //while (ids[x] != 0)
+    //{
+    //  printf("%d\n", ids[x]);
+    //  ++x;
+    //}
+    current = current->prev;
+  }
+  stream->curr = stream->head;
+}
 
 // Adds a file_node to the file_stream
 
@@ -146,6 +229,7 @@ get_file_depends (command_t c)
     }
   }
   //printf("out of switch\n");
+  depends->curr = depends->head;
   return depends;
 }
 
@@ -195,9 +279,10 @@ initialize_cmds (command_stream_t command_stream)
     }
     ++id;
   }
+  stream->tail = stream->curr;
+  stream->curr = stream->head;
   return stream;
 }
-
 
 int
 command_status (command_t c)
@@ -341,6 +426,7 @@ exe_stream (command_stream_t stream, int time_travel)
     // Print dependencies for debugging
     cmds->curr = cmds->head;
     int id = 1;
+    printf("PRINTING FILE DEPENDENCIES\n");
     while (cmds->curr != NULL)
     {
       printf("ID: %d\n", id);
@@ -348,6 +434,23 @@ exe_stream (command_stream_t stream, int time_travel)
       print_file_depends(file_stream);
       cmds->curr = cmds->curr->next;
       ++id;
+    }
+    
+    input_dependencies (cmds);
+    printf("PRINTING COMMAND DEPENDENCIES\n");
+    id = 1;
+    while (cmds->curr != NULL)
+    {
+      int i = 0;
+      printf("ID: %d\n", id);
+      printf("Depends on:\n");
+      while (cmds->curr->depend_id[i] != 0)
+      {
+        printf("[%d]\n", cmds->curr->depend_id[i]);
+        ++i;
+      }
+      ++id;
+      cmds->curr = cmds->curr->next;
     }
     
     //error(1, 0, "time travel not yet implemented\n");
