@@ -5,6 +5,12 @@
 *.tmp
 *.~
 
+#LaTeX
+*.pdf
+*.aux
+*.log
+*.synctex.gz
+
 #lab 1
 timetrash
 
