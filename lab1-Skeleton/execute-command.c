@@ -161,7 +161,7 @@ void input_dependencies (cmd_stream_t stream)
     current = current->prev;
   }
   //Free depends (only need depend_id)
-  stream->curr = stream->head;
+  /*stream->curr = stream->head;
   while(stream->curr != NULL)
   {
     stream->curr->depends->curr = stream->curr->depends->head;
@@ -171,7 +171,7 @@ void input_dependencies (cmd_stream_t stream)
       stream->curr->depends->curr = stream->curr->depends->curr->next;
     }
     stream->curr = stream->curr->next;
-  }
+  }*/
   stream->curr = stream->head;
 }
 
@@ -559,8 +559,10 @@ exe_stream (command_stream_t stream, int time_travel)
       cmds->curr = cmds->curr->next;
       ++id;
     }
+    execute_command(cmds->head->self);
     printf("before inputting dependencies\n");
     input_dependencies (cmds);
+    execute_command(cmds->head->self);
     printf("PRINTING COMMAND DEPENDENCIES\n");
     id = 1;
     while (cmds->curr != NULL)
