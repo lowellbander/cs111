@@ -491,16 +491,19 @@ make_command (char* beg, char* end, int line_num)
     if (the_word != NULL)
     {
       *(com->u.word) = delete_white(the_word);
+      free(the_word);
       //printf("word: [%s]\n", the_word);
     }
     if (input != NULL)
     {
       com->input = delete_white(input);
+      free(input);
       //printf("input: [%s]\n", input);
     }
     if (output != NULL)
     {
       com->output = delete_white(output);
+      free(output);
       //printf("output: [%s]\n", output);
     }
   }
