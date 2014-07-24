@@ -58,8 +58,9 @@ struct cmd_node
 
 void input_dependencies (cmd_stream_t stream)
 {
-  const int INC = 1;
+  const int INC = sizeof(int);
   size_t size = INC;
+  size_t id_size = size;
   
   stream->curr = stream->tail;
   cmd_node_t current = stream->curr;
@@ -70,10 +71,10 @@ void input_dependencies (cmd_stream_t stream)
   while (current != NULL)
   {
     size = INC;
-    printf ("While current != NULL-------------------\n");
+    //printf ("While current != NULL-------------------\n");
     int* ids = checked_malloc(size*sizeof(int));
-    printf("It's this guy!^^^^\n");
-    int id_size = 0;
+    //printf("It's this guy!^^^^\n");
+    int id_index = 0;
     ids[0] = 0; 
     ptr = stream->head;
 
@@ -108,20 +109,35 @@ void input_dependencies (cmd_stream_t stream)
                   (ptr->depends->curr->type == 'w' || ptr0->type == 'w'))
               {
                 int j = 0;
-                while (j < id_size)
+                //printf("***ids[j]: %d\n", ptr->id);
+                while (j < id_index)
                 {
+                  //printf("ids[j]: %d\n", ids[j]);
+                  //printf("ptr->id: %d\n----\n", ptr->id);
                   if (ids[j] == ptr->id)
                     break;
                   ++j;
                 }
                 // If command id was not already in list, add it
-                if (j == id_size)
+                if (j == id_index)
                 {
+                  //printf("id_index: %d\n", id_index);
+                  //printf("size: %d\n", size);
                   //printf("TWINSIES!\n");
-                  if (id_size >= (int) size)
-                    ids = checked_grow_alloc(ids, &size);
-                  ids[id_size] = ptr->id;
-                  ++id_size;
+                  //printf("before growing\n");
+                  ids = checked_grow_alloc(ids, &size);
+                  //printf("grew three inches!\n");
+                  //printf("id_size: %d\n", id_size);
+                  //printf("size: %d\n", size);
+                  ids[id_index] = ptr->id;
+                  ++id_index;
+                  //printf("CURRENT IDS_________________\n");
+                  int y;
+                  //for (y = 0; y < id_index; y++)
+                  //{
+                  //  printf("[%d] ", ids[y]);
+                  //}
+                  //printf("\n");
                 }
               }
               ptr->depends->curr = ptr->depends->curr->next;
@@ -134,7 +150,7 @@ void input_dependencies (cmd_stream_t stream)
     }
     current->depend_id = ids;
     // End int array with signal bit (0 can never be an id)
-    ids[id_size] = 0;
+    ids[id_index] = 0;
     //printf("Inputted ID list\n");
     //int x = 0;
     //while (ids[x] != 0)
@@ -543,7 +559,7 @@ exe_stream (command_stream_t stream, int time_travel)
       cmds->curr = cmds->curr->next;
       ++id;
     }
-    //printf("before inputting dependencies\n");
+    printf("before inputting dependencies\n");
     input_dependencies (cmds);
     printf("PRINTING COMMAND DEPENDENCIES\n");
     id = 1;
