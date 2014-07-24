@@ -3,6 +3,7 @@
 #include "alloc.h"
 #include "command.h"
 #include "command-internals.h"
+#include <stdbool.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -486,31 +487,37 @@ execute_command (command_t c)
   c->status = system(build_sys_string(c));
 }
 
-void* hello(void* void_ptr)
+void* run(void* context)
 {
   printf("HELLO, WORLD!\n");
+  cmd_node_t node = context;
+  execute_command(node->self);
   return NULL;
 }
 
 struct thread_node
 {
-  pthread_t thread;
-
+  pthread_t* thread;
+  thread_node_t next;
+  cmd_node_t command_node;
 };
 
 struct thread_stream
 {
   thread_node_t head;
-  thread_node_t curr;
+  thread_node_t tail;
   // maybe make it circular so we don't need a head?
   // but then how to check that every thread has run?
 };
 
-void
-run(command_t command)
+bool runnable (cmd_node_t node)
 {
-  //get_or_create_thread()
-  
+  int i;
+  int len = sizeof(node->depend_id)/sizeof(int);
+  for (i = 0; i < len; ++i)
+    if (node->depend_id[i] > 0)
+      return false;
+  return true;
 }
 
 command_t
@@ -520,8 +527,9 @@ get_command(cmd_stream_t stream)
   cmd_node_t node;
   for (node = stream->head; node != NULL; node = node->next)
   {
-    printf("hi\n");
     printf("status: %i\n", node->self->status);
+    if (node->self->status == -1 && runnable(node))
+      printf("runnable\n");
   }
   return NULL;
 }
@@ -559,10 +567,8 @@ exe_stream (command_stream_t stream, int time_travel)
       cmds->curr = cmds->curr->next;
       ++id;
     }
-    execute_command(cmds->head->self);
     printf("before inputting dependencies\n");
     input_dependencies (cmds);
-    execute_command(cmds->head->self);
     printf("PRINTING COMMAND DEPENDENCIES\n");
     id = 1;
     while (cmds->curr != NULL)
@@ -579,21 +585,34 @@ exe_stream (command_stream_t stream, int time_travel)
       cmds->curr = cmds->curr->next;
     }
     
-    thread_stream_t thread_stream = checked_malloc(sizeof(thread_stream));
-    //cmds->curr = cmds->head;
-    get_command(cmds);
-    execute_command(cmds->head->self);
-    get_command(cmds);
+    //build a list of threads, one per command
+    thread_stream_t threads = checked_malloc(sizeof(struct thread_stream));
+    cmd_node_t ptr = cmds->head;
+    threads->head = NULL;
+    while (ptr)
+    {
+      thread_node_t t = checked_malloc(sizeof(struct thread_node));
+      t->next = NULL;
+      t->command_node = ptr;
+      t->thread = checked_malloc(sizeof(pthread_t));
 
-    //pthread_t* ptr = malloc(sizeof(pthread_t));
-  
-    //pthread_create(ptr, NULL, &hello, NULL);
-    //pthread_join(*ptr, NULL);
-    
-    //pthread_t t1;
-    //pthread_create(&t1, NULL, &hello, NULL);
-    //pthread_join(t1, NULL);
-    
-    //error(1, 0, "time travel not yet implemented\n");
+      if (threads->head == NULL)
+        threads->head = t;
+      else
+        threads->tail->next = t;
+
+      threads->tail = t;
+      ptr = ptr->next;
+    }
+
+    thread_node_t t = threads->head;
+    //while (t)
+    //{
+    //  execute_command(t->command_node->self);
+    //  t = t->next;
+    //}
+
+    pthread_create(t->thread, NULL, &run, t->command_node);
+    pthread_join(*t->thread, NULL);
   }
 }
