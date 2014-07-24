@@ -489,7 +489,6 @@ execute_command (command_t c)
 
 void* run(void* context)
 {
-  printf("HELLO, WORLD!\n");
   cmd_node_t node = context;
   execute_command(node->self);
   return NULL;
@@ -606,13 +605,18 @@ exe_stream (command_stream_t stream, int time_travel)
     }
 
     thread_node_t t = threads->head;
-    //while (t)
-    //{
-    //  execute_command(t->command_node->self);
-    //  t = t->next;
-    //}
+    while (t)
+    {
+      pthread_create(t->thread, NULL, &run, t->command_node);
+      t = t->next;
+    }
 
-    pthread_create(t->thread, NULL, &run, t->command_node);
-    pthread_join(*t->thread, NULL);
+    //wait for all the threads to finish
+    t = threads->head;
+    while (t)
+    {
+      pthread_join(*t->thread, NULL);
+      t = t->next;
+    }
   }
 }
