@@ -18,7 +18,7 @@ void print_command (command_t);
 
 /* Execute a command.  Use "time travel" if the integer flag is
    nonzero.  */
-void execute_command (command_t, int);
+void execute_command (command_t);
 
 /* Execute a command stream.  Use "time travel" if the integer flag is
    nonzero.  */

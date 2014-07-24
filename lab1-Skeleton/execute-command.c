@@ -465,10 +465,9 @@ build_sys_string (command_t c)
 }
 
 void
-execute_command (command_t c, int time_travel)
+execute_command (command_t c)
 {
-  if (time_travel == 0)
-    system(build_sys_string(c));
+  system(build_sys_string(c));
 }
 
 void* hello(void* void_ptr)
@@ -499,9 +498,15 @@ run(command_t command)
 }
 
 command_t
-get_command(command_stream_t command)
+get_command(cmd_stream_t stream)
 {
   //cmd_node_t = 
+  cmd_node_t node;
+  for (node = stream->head; node != NULL; node = node->next)
+  {
+    printf("hi\n");
+    printf("status: %i\n", node->self->status);
+  }
   return NULL;
 }
 
@@ -512,7 +517,7 @@ exe_stream (command_stream_t stream, int time_travel)
   {
     command_t command;
     while ((command = read_command_stream(stream)))
-      execute_command(command, time_travel);
+      execute_command(command);
   }
   else
   {
@@ -557,8 +562,9 @@ exe_stream (command_stream_t stream, int time_travel)
     }
     
     thread_stream_t thread_stream = checked_malloc(sizeof(thread_stream));
-    cmds->curr = cmds->head;
-
+    //cmds->curr = cmds->head;
+    get_command(cmds);
+    get_command(cmds);
 
     //pthread_t* ptr = malloc(sizeof(pthread_t));
   
