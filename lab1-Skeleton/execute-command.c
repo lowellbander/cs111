@@ -9,6 +9,10 @@
 #include <string.h>
 #include <error.h>
 
+// to keep track of threads running commands in parallel
+typedef struct thread_stream *thread_stream_t;
+typedef struct thread_node *thread_node_t;
+
 typedef struct file_stream *file_stream_t;
 typedef struct file_node *file_node_t;
 
@@ -391,11 +395,39 @@ execute_command (command_t c, int time_travel)
     system(build_sys_string(c));
 }
 
-//void* hello(void* void_ptr)
-//{
-//  printf("hello, world!\n");
-//  return NULL;
-//}
+void* hello(void* void_ptr)
+{
+  printf("HELLO, WORLD!\n");
+  return NULL;
+}
+
+struct thread_node
+{
+  pthread_t thread;
+
+};
+
+struct thread_stream
+{
+  thread_node_t head;
+  thread_node_t curr;
+  // maybe make it circular so we don't need a head?
+  // but then how to check that every thread has run?
+};
+
+void
+run(command_t command)
+{
+  //get_or_create_thread()
+  
+}
+
+command_t
+get_command(command_stream_t command)
+{
+  //cmd_node_t = 
+  return NULL;
+}
 
 void
 exe_stream (command_stream_t stream, int time_travel)
@@ -411,11 +443,6 @@ exe_stream (command_stream_t stream, int time_travel)
     //group together the commands by dependencies, possible into command streams
     //then execute each command stream in it's own thread
 
-    //pthread_t t1;
-    //pthread_create(&t1, NULL, &hello, NULL);
-    //pthread_join(t1, NULL);
-
-    
     cmd_stream_t cmds = checked_malloc(sizeof(struct cmd_stream));
     cmds = initialize_cmds(stream);
     
@@ -449,6 +476,19 @@ exe_stream (command_stream_t stream, int time_travel)
       ++id;
       cmds->curr = cmds->curr->next;
     }
+    
+    thread_stream_t thread_stream = checked_malloc(sizeof(thread_stream));
+    cmds->curr = cmds->head;
+
+
+    //pthread_t* ptr = malloc(sizeof(pthread_t));
+  
+    //pthread_create(ptr, NULL, &hello, NULL);
+    //pthread_join(*ptr, NULL);
+    
+    //pthread_t t1;
+    //pthread_create(&t1, NULL, &hello, NULL);
+    //pthread_join(t1, NULL);
     
     //error(1, 0, "time travel not yet implemented\n");
   }
