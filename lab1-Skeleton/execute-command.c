@@ -483,7 +483,7 @@ build_sys_string (command_t c)
 void
 execute_command (command_t c)
 {
-  system(build_sys_string(c));
+  c->status = system(build_sys_string(c));
 }
 
 void* hello(void* void_ptr)
@@ -582,6 +582,7 @@ exe_stream (command_stream_t stream, int time_travel)
     thread_stream_t thread_stream = checked_malloc(sizeof(thread_stream));
     //cmds->curr = cmds->head;
     get_command(cmds);
+    execute_command(cmds->head->self);
     get_command(cmds);
 
     //pthread_t* ptr = malloc(sizeof(pthread_t));
