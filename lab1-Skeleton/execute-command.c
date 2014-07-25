@@ -509,30 +509,44 @@ thread_node_t
 get_thread_node(int id)
 {
   printf("getting thread_node for id %i\n", id);
+  thread_node_t node = threads->head;
+  while (node->command_node->id != id)
+    node = node->next;
 
-  return 0;
+  //spin until command completes
+  while (node->command_node->self->status < 0)
+    continue;
+    
+  return node;
 }
 
 void* run(void* context)
 {
   cmd_node_t node = context;
 
-  //sleep(rand() % 5); // illustrates that commands not run sequentially
+  sleep(rand() % 5); // illustrates that commands not run sequentially
 
   // wait for all dependencies to finish execution
   int i;
   int id = node->id;
-  printf("executing command with id: %i\n", id);
+  printf("started command with id: %i\n", id);
   int len = sizeof(node->depend_id)/sizeof(int);
   for (i = 0; node->depend_id[i] != 0; ++i)
   {
     thread_node_t t = get_thread_node(node->depend_id[i]);
+    
+
+    pthread_join(*t->thread, NULL);
   }
 
+  printf("status for id %i is %i\n", id, node->self->status);
   execute_command(node->self);
+  printf("status for id %i is %i\n", id, node->self->status);
+  printf("finished command with id: %i\n", id);
   return NULL;
 }
 
+//deprecate
 bool runnable (cmd_node_t node)
 {
   int i;
@@ -543,6 +557,7 @@ bool runnable (cmd_node_t node)
   return true;
 }
 
+//deprecate
 command_t
 get_command(cmd_stream_t stream)
 {
@@ -602,7 +617,7 @@ exe_stream (command_stream_t stream, int time_travel)
     }
     
     //build a list of threads, one per command
-    thread_stream_t threads = checked_malloc(sizeof(struct thread_stream));
+    threads = checked_malloc(sizeof(struct thread_stream));
     cmd_node_t ptr = cmds->head;
     threads->head = NULL;
     while (ptr)
