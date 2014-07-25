@@ -108,9 +108,6 @@ char* copy(char* beg, char* end)
 
     ++beg;
   }
-  //printf("copy: <");
-  //puts(string);
-  //printf(">\n");
   // End string properly
   string[i] = '\0';
   return string;
@@ -153,7 +150,6 @@ bool is_operand(char c)
 void validate(char* string, int line_num) {
   int i;
   int len = strlen(string);
-  //printf("length: %d\n", len);
   const char* end = string + len;
   int balance = 0;
   // Currently line is the last line number of the string
@@ -169,8 +165,6 @@ void validate(char* string, int line_num) {
     bool left = false;
     bool right = false;
     char c = string[i];
-    //printf("c: [%c]\n", c);
-    //printf("line: %d\n", line);
 
     // Keep track of line number
     if (c == '\n')
@@ -189,15 +183,11 @@ void validate(char* string, int line_num) {
     // Invalid cases: a>b<c, a<b<c, a>b>c
     if (c == '<' || c == '>')
     {
-      //printf("Found arrow: %c\n", c);
       // Whether beginning of operand was found
       int l;
       // Check for left operand
       for (l = i - 1; l != -1; --l)
       {
-        //printf("****************\nstring[l]: [%c]\n", string[l]);
-        //if (left) printf("left = true\n"); else printf("left = false\n");
-
         if (is_operand(string[l])) 
           left = true;
         else if (is_operator(string[l]) && !left)
@@ -239,7 +229,6 @@ void validate(char* string, int line_num) {
     { 
       left = false;
       right = false;
-      //printf("Entering checking for left and right\n");
       // Check that it has left operands
       int l;
       for (l = i - 1; l != -1; --l)
@@ -393,13 +382,11 @@ make_command (char* beg, char* end, int line_num)
     com->type = SIMPLE_COMMAND;
     com->u.word = checked_malloc(20*sizeof(char*));
     char* word = copy(beg, end);
-    //printf("word: <"); puts(word); printf(">\n"); printf("length: %d\n", strlen(word));
     char* ptr;
 
     bool found_operand = false;
     for (ptr = beg; ptr <= end; ++ptr)
     {
-      //printf("Getting rid of leading\n");
       if (is_operand(*ptr) || is_special(*ptr)) 
       {
         found_operand = true;
@@ -411,20 +398,14 @@ make_command (char* beg, char* end, int line_num)
 
     for (ptr = end; ptr >= beg; --ptr)
     {
-      //printf("Getting rid of trailing\n");
       if (is_operand(*ptr) || is_special(*ptr)) 
       {
         end = ++ptr;
         word = copy(beg, end);
         break;
       }
-      //else printf("skipiping over: <%c>\n", *ptr);
     }
-    //printf("Making simple command: <");
-    //puts(word);
-    //printf(">\n");
-    //if (!found_operand)
-    //  error(1, 0, "No operands before ; on line: %d\n", line_num);
+
     *(com->u.word) = word;
   
     // Separate into input and output
@@ -437,7 +418,6 @@ make_command (char* beg, char* end, int line_num)
     bool found_io = false;
     for (ptr = beg; ptr <= end; ++ptr)
     {
-      //printf("****************\nbeg: %c\nptr: %c\n", *beg, *ptr);
       // If found next > or <
       if ((*ptr == '<' || *ptr == '>') && !found_arrow)
       {
@@ -462,7 +442,6 @@ make_command (char* beg, char* end, int line_num)
         }
         else if (*(beg - 1) == '>') 
         {
-          //printf("found output\n");
           found_io = false;
           output = copy(beg, ptr);
           beg = ptr + 1;
@@ -489,34 +468,20 @@ make_command (char* beg, char* end, int line_num)
     } 
     
     if (the_word != NULL)
-    {
       *(com->u.word) = delete_white(the_word);
-      free(the_word);
-      //printf("word: [%s]\n", the_word);
-    }
     if (input != NULL)
-    {
       com->input = delete_white(input);
-      free(input);
-      //printf("input: [%s]\n", input);
-    }
     if (output != NULL)
-    {
       com->output = delete_white(output);
-      free(output);
-      //printf("output: [%s]\n", output);
-    }
   }
   else if (*optPtr == ';')
   {
-    //printf("Making sequence command\n");
     com->type = SEQUENCE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == ')')
   {
-    //printf("Making subshell command\n");
     com->type = SUBSHELL_COMMAND;
     char* open = beg;
     while (*open != '(') ++open;
@@ -524,21 +489,18 @@ make_command (char* beg, char* end, int line_num)
   }
   else if (*optPtr == '|' && *(optPtr-1) != '|')
   {
-    //printf("Making pipe command\n");
     com->type = PIPE_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 1, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == '|')
   {
-    //printf("Making OR command\n");
     com->type = OR_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 2, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
   }
   else if (*optPtr == '&')
   {
-    //printf("Making AND command\n");
     com->type = AND_COMMAND;
     com->u.command[0] = make_command(beg, optPtr - 2, line_num);
     com->u.command[1] = make_command(optPtr + 1, end, line_num);
@@ -592,7 +554,6 @@ make_command_stream (int (*get_next_byte) (void *),
 
   char* end = string + strlen(string) - 1;
     
-  //int i = 0;
   char* a = string;
   char* b;
 
@@ -610,11 +571,6 @@ make_command_stream (int (*get_next_byte) (void *),
  
   while (b <= end)
   { 
-    //printf("b: <%c>\n", *b);
-/*if (found_operator) printf("found_operator = true\n"); else printf("found_operator = false\n");
-if (finished_command) printf("finished_command = true\n"); else printf("finished_command = false\n");
-if (found_beg_command) printf("found_beg_command = true\n"); else printf("found_beg_command = false\n");
-if (found_comment) printf("*******************found_comment = true\n"); else printf("found_comment = false\n");*/
      // Skip over comments
      if (is_operator(*b) && !found_beg_command)
        error(1, 0, "Line %d may not start with operator", line_num);
@@ -642,7 +598,6 @@ if (found_comment) printf("*******************found_comment = true\n"); else pri
        found_comment = true;
        before_comment = b - 1;
      }
-     //printf("b: <%c>\n", *b);
      else if (*b == '&')
      {
        // Check for beggining with operand
@@ -673,10 +628,8 @@ if (found_comment) printf("*******************found_comment = true\n"); else pri
         // Found end of complete command
         if (!found_operator && found_beg_command && !found_comment)
         {
-          //printf("Found end of complete command\n");
           char* temp_string = checked_malloc(sizeof(copy(a, b+1)));
           temp_string = copy(a, b+1);
-          //puts(temp_string);
           validate(temp_string, line_num);
           push(stream, make_command(temp_string, 
                                     temp_string + (int)strlen(temp_string), 
@@ -693,7 +646,6 @@ if (found_comment) printf("*******************found_comment = true\n"); else pri
           // End of comment, make command preceding it
           if (found_beg_command)
           {
-            //printf("Found end of comment and making command!\n");
             char* temp_string = checked_malloc(sizeof(copy(a, before_comment+1)));
             temp_string = copy(a, before_comment+1);
             validate(temp_string, line_num);
@@ -711,7 +663,6 @@ if (found_comment) printf("*******************found_comment = true\n"); else pri
      }
      else if (*b != ' ' && *b != '\t' && !found_comment)
      {
-       //printf("found_beg_command\n");
        finished_command = false;
        found_operator = false;
        found_beg_command = true;
@@ -723,9 +674,7 @@ if (found_comment) printf("*******************found_comment = true\n"); else pri
   if (!finished_command)
   {
     char* temp_string;
-    //printf("Finishing command:\n");
     temp_string = copy(a, b+1);
-    //puts(temp_string);
     validate(temp_string, line_num);
     push(stream, make_command(temp_string,
                               temp_string + (int)strlen(temp_string),

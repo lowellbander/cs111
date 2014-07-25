@@ -77,9 +77,7 @@ void input_dependencies (cmd_stream_t stream)
   while (current != NULL)
   {
     size = INC;
-    //printf ("While current != NULL-------------------\n");
     int* ids = checked_malloc(size*sizeof(int));
-    //printf("It's this guy!^^^^\n");
     int id_index = 0;
     ids[0] = 0; 
     ptr = stream->head;
@@ -98,28 +96,19 @@ void input_dependencies (cmd_stream_t stream)
         // Go through each previous command
         while (ptr != current)
         {
-          //printf("Going through each previous command\n");
-          
           // Go through each file in this previous command 
           if (ptr->depends != NULL)
           {
-            //printf("Going through each file in previous command\n");
-            
             ptr->depends->curr = ptr->depends->head;
             while (ptr->depends->curr != NULL)
             {
-              //printf("Comparing files\n");
               // Found dependent file
-              //printf("[%s] - - [%s]\n", ptr0->name, ptr->depends->curr->name);
               if (strcmp(ptr0->name, ptr->depends->curr->name) == 0 &&
                   (ptr->depends->curr->type == 'w' || ptr0->type == 'w'))
               {
                 int j = 0;
-                //printf("***ids[j]: %d\n", ptr->id);
                 while (j < id_index)
                 {
-                  //printf("ids[j]: %d\n", ids[j]);
-                  //printf("ptr->id: %d\n----\n", ptr->id);
                   if (ids[j] == ptr->id)
                     break;
                   ++j;
@@ -127,23 +116,10 @@ void input_dependencies (cmd_stream_t stream)
                 // If command id was not already in list, add it
                 if (j == id_index)
                 {
-                  //printf("id_index: %d\n", id_index);
-                  //printf("size: %d\n", size);
-                  //printf("TWINSIES!\n");
-                  //printf("before growing\n");
                   ids = checked_grow_alloc(ids, &size);
-                  //printf("grew three inches!\n");
-                  //printf("id_size: %d\n", id_size);
-                  //printf("size: %d\n", size);
                   ids[id_index] = ptr->id;
                   ++id_index;
-                  //printf("CURRENT IDS_________________\n");
                   int y;
-                  //for (y = 0; y < id_index; y++)
-                  //{
-                  //  printf("[%d] ", ids[y]);
-                  //}
-                  //printf("\n");
                 }
               }
               ptr->depends->curr = ptr->depends->curr->next;
@@ -157,27 +133,10 @@ void input_dependencies (cmd_stream_t stream)
     current->depend_id = ids;
     // End int array with signal bit (0 can never be an id)
     ids[id_index] = 0;
-    //printf("Inputted ID list\n");
-    //int x = 0;
-    //while (ids[x] != 0)
-    //{
-    //  printf("%d\n", ids[x]);
-    //  ++x;
-    //}
+
     current = current->prev;
   }
-  //Free depends (only need depend_id)
-  /*stream->curr = stream->head;
-  while(stream->curr != NULL)
-  {
-    stream->curr->depends->curr = stream->curr->depends->head;
-    while (stream->curr->depends->curr != NULL)
-    {
-      free (stream->curr->depends->curr->name);
-      stream->curr->depends->curr = stream->curr->depends->curr->next;
-    }
-    stream->curr = stream->curr->next;
-  }*/
+
   stream->curr = stream->head;
 }
 
@@ -185,16 +144,12 @@ void input_dependencies (cmd_stream_t stream)
 
 void push_file (file_stream_t stream, char* file, char type)
 {
-  //printf("PUSHING FILE\n");
   file_node_t node = checked_malloc(sizeof(struct file_node));
   node->name = file;
   node->type = type;
-  //printf("PUSHED [%s]\n", file);
   node->next = NULL;
   if (stream->head == NULL)
   {
-    //printf("Starting stream\n");
-    //puts(file);
     // the stream is empty 
     stream->head = node;
     stream->tail = node;
@@ -203,8 +158,6 @@ void push_file (file_stream_t stream, char* file, char type)
   }
   else
   {
-    //printf("pushing file\n");
-    //puts(file);
     stream->tail->next = node;
     stream->tail = stream->tail->next;
     return;
@@ -220,7 +173,6 @@ void push_file (file_stream_t stream, char* file, char type)
 file_stream_t
 get_file_depends (command_t c)
 {
-  //printf ("GETTING FILE DEPENDS\n");
   file_stream_t depends = checked_malloc(sizeof(struct file_stream));
   depends->head = NULL;
   depends->curr = NULL;
@@ -230,32 +182,22 @@ get_file_depends (command_t c)
   {
     case SIMPLE_COMMAND:
     {
-      //printf("depending on simple\n");
-      //printf("word: %s\n", *c->u.word);
       if (c->input != NULL)
-      {
-        //printf("input: [");
-        //puts(c->input);
-        //printf("]\n");
         push_file(depends, c->input, 'r');
-      }
+
       if (c->output != NULL)
         push_file(depends, c->output, 'w');
       
       char* word = *c->u.word;
       if (word != NULL)
       {
-        //printf("word: [%s]\n", word);
         int word_size = strlen(word);
-        //printf("size: %d\n", word_size);
         int i = 0;
         int beg = 0;
+        // Tokenize word
         while (i < word_size)
         {
-          //printf("%d: first while\n", i);
           char temp_ch = word[i];
-          //printf("word[%d]: %c\n", i, temp_ch);
-          //printf("beg: %d\n", beg);
           // Found end of token
           if (temp_ch == ' ' || temp_ch == '\n')
           {
@@ -264,7 +206,6 @@ get_file_depends (command_t c)
             int index = 0;
             while (t < i)
             {
-              //printf("second while\n");
               token[index] = word[t];
               ++index;
               ++t;
@@ -282,14 +223,12 @@ get_file_depends (command_t c)
           char* token = checked_malloc((i-beg)*sizeof(char));
           while (beg < i)
           {
-            //printf("last while\n");
             token[index] = word[beg];
             ++index;
             ++beg;
           }
           push_file (depends, token, 'r');
         }
-        //printf("out of the woods\n");
       }
       break;
     }
@@ -303,14 +242,11 @@ get_file_depends (command_t c)
     case SEQUENCE_COMMAND:
     case PIPE_COMMAND:
     {
-      //printf("depending on pipe\n");
       // Set depends to left dependency list
       depends = get_file_depends (c->u.command[0]);
-      //printf("Got depends\n");
       // Append right depedency list to tail of current list
       if (depends->curr != NULL)
       {
-        //printf("Found left dependency....\n");
         depends->tail->next = (get_file_depends(c->u.command[1]))->head;
         // Update tail
         depends->curr = depends->tail;
@@ -322,29 +258,11 @@ get_file_depends (command_t c)
         break;
       }
       else
-      {
-        //printf("Found no right dependency\n");
         depends = get_file_depends(c->u.command[1]);
-      }
     }
   }
-  //printf("out of switch\n");
   depends->curr = depends->head;
   return depends;
-}
-
-//////////////////////////////////////////////////////////
-///////// Prints dependency file list (delete after debug)
-void print_file_depends (file_stream_t files)
-{
-  files->curr = files->head;
-  printf("Depends on:\n");
-  while (files->curr != NULL)
-  {
-    printf("[%s]\n", files->curr->name);
-    files->curr = files->curr->next;
-  }
-  printf("\n");
 }
 
 // Set up's cmd_stream, minus depend_id
@@ -357,7 +275,6 @@ initialize_cmds (command_stream_t command_stream)
   int id = 1;
   while ((command = read_command_stream(command_stream)))
   {
-    //printf("ID: %d------------------\n", id);
     cmd_node_t node = checked_malloc(sizeof(struct cmd_node));
     node->id = id;
     node->self = command;
@@ -388,6 +305,8 @@ command_status (command_t c)
 {
   return c->status;
 }
+
+// Finds length of command string 
 
 int
 find_command_size (command_t c)
@@ -423,6 +342,9 @@ find_command_size (command_t c)
   }
   return len;
 }
+
+// Builds command string to pass into system()
+// It is called recursively, appending simple commands and the operators
 
 char*
 build_sys_string (command_t c)
@@ -508,7 +430,6 @@ struct thread_stream
 thread_node_t 
 get_thread_node(int id)
 {
-  printf("getting thread_node for id %i\n", id);
   thread_node_t node = threads->head;
   while (node->command_node->id != id)
     node = node->next;
@@ -524,12 +445,11 @@ void* run(void* context)
 {
   cmd_node_t node = context;
 
-  sleep(rand() % 5); // illustrates that commands not run sequentially
+  //sleep(rand() % 5); // illustrates that commands not run sequentially
 
   // wait for all dependencies to finish execution
   int i;
   int id = node->id;
-  printf("started command with id: %i\n", id);
   int len = sizeof(node->depend_id)/sizeof(int);
   for (i = 0; node->depend_id[i] != 0; ++i)
   {
@@ -538,11 +458,7 @@ void* run(void* context)
 
     pthread_join(*t->thread, NULL);
   }
-
-  printf("status for id %i is %i\n", id, node->self->status);
   execute_command(node->self);
-  printf("status for id %i is %i\n", id, node->self->status);
-  printf("finished command with id: %i\n", id);
   return NULL;
 }
 
@@ -565,7 +481,6 @@ get_command(cmd_stream_t stream)
   cmd_node_t node;
   for (node = stream->head; node != NULL; node = node->next)
   {
-    printf("status: %i\n", node->self->status);
     if (node->self->status == -1 && runnable(node))
       printf("runnable\n");
   }
@@ -585,36 +500,7 @@ exe_stream (command_stream_t stream, int time_travel)
   {
     
     cmd_stream_t cmds = initialize_cmds(stream);
-    
-    // Print dependencies for debugging
-    cmds->curr = cmds->head;
-    int id = 1;
-    printf("PRINTING FILE DEPENDENCIES\n");
-    while (cmds->curr != NULL)
-    {
-      printf("ID: %d\n", id);
-      file_stream_t file_stream = cmds->curr->depends;
-      print_file_depends(file_stream);
-      cmds->curr = cmds->curr->next;
-      ++id;
-    }
-    printf("before inputting dependencies\n");
     input_dependencies (cmds);
-    printf("PRINTING COMMAND DEPENDENCIES\n");
-    id = 1;
-    while (cmds->curr != NULL)
-    {
-      int i = 0;
-      printf("ID: %d\n", id);
-      printf("Depends on:\n");
-      while (cmds->curr->depend_id[i] != 0)
-      {
-        printf("[%d]\n", cmds->curr->depend_id[i]);
-        ++i;
-      }
-      ++id;
-      cmds->curr = cmds->curr->next;
-    }
     
     //build a list of threads, one per command
     threads = checked_malloc(sizeof(struct thread_stream));
