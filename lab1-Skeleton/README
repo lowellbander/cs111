@@ -8,6 +8,8 @@ We would pick up where the other left off, either debugging or begin adding the
 next feature. Almost all of the sections of code were either co-written 
 or debugged by both of us.
 
-Currently our program passes all of the test cases with make check. While 
-execution has been implemented, it has not been thoroughly tested.
+Currently our program passes all of the test cases with make check. Execution
+can be run in parallel or in sequence.
 
+Uncommenting line 449 of execute_command.c dramatizes the discrepancy in
+completion times between commands.
