@@ -8,11 +8,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <error.h>
+
 
 // to keep track of threads running commands in parallel
 typedef struct thread_stream *thread_stream_t;
 typedef struct thread_node *thread_node_t;
+
+//global list of threads
+thread_stream_t threads;
 
 typedef struct file_stream *file_stream_t;
 typedef struct file_node *file_node_t;
@@ -487,13 +492,6 @@ execute_command (command_t c)
   c->status = system(build_sys_string(c));
 }
 
-void* run(void* context)
-{
-  cmd_node_t node = context;
-  execute_command(node->self);
-  return NULL;
-}
-
 struct thread_node
 {
   pthread_t* thread;
@@ -505,9 +503,35 @@ struct thread_stream
 {
   thread_node_t head;
   thread_node_t tail;
-  // maybe make it circular so we don't need a head?
-  // but then how to check that every thread has run?
 };
+
+thread_node_t 
+get_thread_node(int id)
+{
+  printf("getting thread_node for id %i\n", id);
+
+  return 0;
+}
+
+void* run(void* context)
+{
+  cmd_node_t node = context;
+
+  //sleep(rand() % 5); // illustrates that commands not run sequentially
+
+  // wait for all dependencies to finish execution
+  int i;
+  int id = node->id;
+  printf("executing command with id: %i\n", id);
+  int len = sizeof(node->depend_id)/sizeof(int);
+  for (i = 0; node->depend_id[i] != 0; ++i)
+  {
+    thread_node_t t = get_thread_node(node->depend_id[i]);
+  }
+
+  execute_command(node->self);
+  return NULL;
+}
 
 bool runnable (cmd_node_t node)
 {
@@ -544,13 +568,6 @@ exe_stream (command_stream_t stream, int time_travel)
   }
   else
   {
-    //group together the commands by dependencies, possible into command streams
-    //then execute each command stream in it's own thread
-
-    //pthread_t t1;
-    //pthread_create(&t1, NULL, &hello, NULL);
-    //pthread_join(t1, NULL);
-
     
     cmd_stream_t cmds = initialize_cmds(stream);
     
@@ -604,6 +621,7 @@ exe_stream (command_stream_t stream, int time_travel)
       ptr = ptr->next;
     }
 
+    // execute each command in its own thread
     thread_node_t t = threads->head;
     while (t)
     {
