@@ -62,6 +62,19 @@ struct cmd_node
   int* depend_id;
 };		
 
+struct thread_node
+{
+  pthread_t* thread;
+  thread_node_t next;
+  cmd_node_t command_node;
+};
+
+struct thread_stream
+{
+  thread_node_t head;
+  thread_node_t tail;
+};
+
 void input_dependencies (cmd_stream_t stream)
 {
   const int INC = sizeof(int);
@@ -414,19 +427,6 @@ execute_command (command_t c)
   c->status = system(build_sys_string(c));
 }
 
-struct thread_node
-{
-  pthread_t* thread;
-  thread_node_t next;
-  cmd_node_t command_node;
-};
-
-struct thread_stream
-{
-  thread_node_t head;
-  thread_node_t tail;
-};
-
 thread_node_t 
 get_thread_node(int id)
 {
@@ -445,45 +445,18 @@ void* run(void* context)
 {
   cmd_node_t node = context;
 
-  //sleep(rand() % 5); // illustrates that commands not run sequentially
+  // illustrates that commands not run sequentially
+  //sleep(rand() % 5); 
 
   // wait for all dependencies to finish execution
   int i;
-  int id = node->id;
   int len = sizeof(node->depend_id)/sizeof(int);
   for (i = 0; node->depend_id[i] != 0; ++i)
   {
     thread_node_t t = get_thread_node(node->depend_id[i]);
-    
-
     pthread_join(*t->thread, NULL);
   }
   execute_command(node->self);
-  return NULL;
-}
-
-//deprecate
-bool runnable (cmd_node_t node)
-{
-  int i;
-  int len = sizeof(node->depend_id)/sizeof(int);
-  for (i = 0; i < len; ++i)
-    if (node->depend_id[i] > 0)
-      return false;
-  return true;
-}
-
-//deprecate
-command_t
-get_command(cmd_stream_t stream)
-{
-  //cmd_node_t = 
-  cmd_node_t node;
-  for (node = stream->head; node != NULL; node = node->next)
-  {
-    if (node->self->status == -1 && runnable(node))
-      printf("runnable\n");
-  }
   return NULL;
 }
 
