@@ -71,6 +71,10 @@ typedef struct osprd_info {
 	spinlock_t qlock;		// Used internally for mutual
 	                                //   exclusion in the 'queue'.
 	struct gendisk *gd;             // The generic disk.
+	
+	// keep track of how many read and write locks are held
+	int num_write;
+	int num_read;
 } osprd_info_t;
 
 #define NOSPRD 4
@@ -127,7 +131,7 @@ static void osprd_process_request(osprd_info_t *d, struct request *req)
 	  return;
 	}
 	// If reading request
-	if (rq_data_dir(req) == 0)
+	if (rq_data_dir(req) == READ)
 	{
 	  // Read to buffer sector from data
 	  memcpy (req->buffer, 
@@ -135,7 +139,7 @@ static void osprd_process_request(osprd_info_t *d, struct request *req)
 	          req->current_nr_sectors * SECTOR_SIZE);
 	}
 	// Writing request
-	else if (rq_data_dir(req) == 1)
+	else if (rq_data_dir(req) == WRITE)
 	{
 	  // Write to data sector from buffer
 	  memcpy (d->data + req->sector * SECTOR_SIZE, 
@@ -212,7 +216,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		// to write-lock the ramdisk; otherwise attempt to read-lock
 		// the ramdisk.
 		//
-                // This lock request must block using 'd->blockq' until:
+    // This lock request must block using 'd->blockq' until:
 		// 1) no other process holds a write lock;
 		// 2) either the request is for a read lock, or no other process
 		//    holds a read lock; and
@@ -240,8 +244,19 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		// Then, block at least until 'd->ticket_tail == local_ticket'.
 		// (Some of these operations are in a critical section and must
 		// be protected by a spinlock; which ones?)
+		
+		
 
-		// Your code here (instead of the next two lines).
+		// If *filp is open for writing (filp_writable), then attempt
+		// to write-lock the ramdisk;
+		if (flip_writable)
+		{
+		}
+		//otherwise attempt to read-lock the ramdisk.
+		else
+		{
+		}
+		
 		eprintk("Attempting to acquire\n");
 		r = -ENOTTY;
 
