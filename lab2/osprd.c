@@ -120,21 +120,28 @@ static void osprd_process_request(osprd_info_t *d, struct request *req)
 	// Consider the 'req->sector', 'req->current_nr_sectors', and
 	// 'req->buffer' members, and the rq_data_dir() function.
 
-	// Your code here.
-	// If reading request
-	/*if (rq_data_dir(req) == 0)
+	// Check for overwrite
+	if (req->sector + req->current_nr_sectors > nsectors)
 	{
-	  memcpy(void* destination, const *void source, size_t num)
-	  // Read from buffer
-	  memcpy (req->buffer, const *void source, size_t num);
+	  end_request(req, 0);
+	  return;
+	}
+	// If reading request
+	if (rq_data_dir(req) == 0)
+	{
+	  // Read to buffer sector from data
+	  memcpy (req->buffer, 
+	          d->data + req->sector * SECTOR_SIZE, 
+	          req->current_nr_sectors * SECTOR_SIZE);
 	}
 	// Writing request
 	else if (rq_data_dir(req) == 1)
 	{
-	  memcpy ( void *destination, req->buffer, size_t num);
+	  // Write to data sector from buffer
+	  memcpy (d->data + req->sector * SECTOR_SIZE, 
+	          req->buffer, 
+	          req->current_nr_sectors * SECTOR_SIZE);
 	}
-	*/
-	eprintk("Should process request...\n");
 
 	end_request(req, 1);
 }
