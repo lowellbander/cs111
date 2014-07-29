@@ -245,17 +245,50 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		// Then, block at least until 'd->ticket_tail == local_ticket'.
 		// (Some of these operations are in a critical section and must
 		// be protected by a spinlock; which ones?)
-		
-		
+/*		
+		// Set local variable to 'd->ticket_head' and increment 'd->ticket_head'
+		unsigned local_ticket = d->ticket_head;
+		d->ticket_head++;
 
 		// If *filp is open for writing (filp_writable), then attempt
 		// to write-lock the ramdisk;
-		if (flip_writable)
+		if (filp_writable)
 		{
+		  // lock request must block using 'd->blockq' until:
+		  // 1) no other process holds a write lock;
+	    // 2) either the request is for a read lock, or no other process
+	    //    holds a read lock; and
+	    // 3) lock requests should be serviced in order, so no process
+	    //    that blocked earlier is still blocked waiting for the
+	    //    lock.
+	    // block at least until 'd->ticket_tail == local_ticket'
+	    int wait_return = wait_event_interruptible(d->blockq, d->num_write == 0 && 
+	                                                          d->num_read == 0 && 
+	                                                          d->ticket_tail == local_ticket);
+      if (wait_return == -ERESTARTSYS)
+        return -ERESTARTSYS; 
+ */       
+		  
 		}
 		//otherwise attempt to read-lock the ramdisk.
 		else
 		{
+/*		
+		  // lock request must block using 'd->blockq' until:
+		  // 1) no other process holds a write lock;
+	    // 2) either the request is for a read lock, or no other process
+	    //    holds a read lock; and
+	    // 3) lock requests should be serviced in order, so no process
+	    //    that blocked earlier is still blocked waiting for the
+	    //    lock.
+	    // block at least until 'd->ticket_tail == local_ticket'
+	    int wait_return = wait_event_interruptible(d->blockq, d->num_write == 0 && 
+	                                                          d->ticket_tail == local_ticket);
+	                                                          
+	    if (wait_return == -ERESTARTSYS)
+        return -ERESTARTSYS;   
+ */
+                                                      
 		}
 		
 		eprintk("Attempting to acquire\n");
