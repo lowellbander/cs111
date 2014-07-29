@@ -253,7 +253,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		// to write-lock the ramdisk;
 		if (filp_writable)
 		{
-/*
+
 		  // lock request must block using 'd->blockq' until:
 		  // 1) no other process holds a write lock;
 	    // 2) either the request is for a read lock, or no other process
@@ -267,13 +267,13 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 	                                                          d->ticket_tail == local_ticket);
       if (wait_return == -ERESTARTSYS)
         return -ERESTARTSYS; 
- */       
+        
 		  
 		}
 		//otherwise attempt to read-lock the ramdisk.
 		else
 		{
-/*		
+		
 		  // lock request must block using 'd->blockq' until:
 		  // 1) no other process holds a write lock;
 	    // 2) either the request is for a read lock, or no other process
@@ -287,7 +287,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 	                                                          
 	    if (wait_return == -ERESTARTSYS)
         return -ERESTARTSYS;   
- */
+ 
                                                       
 		}
 		
@@ -334,6 +334,8 @@ static void osprd_setup(osprd_info_t *d)
 	osp_spin_lock_init(&d->mutex);
 	d->ticket_head = d->ticket_tail = 0;
 	/* Add code here if you add fields to osprd_info_t. */
+	d->num_write = 0;
+	d->num_read = 0;
 }
 
 
