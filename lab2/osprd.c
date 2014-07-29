@@ -198,6 +198,7 @@ static int osprd_close_last(struct inode *inode, struct file *filp)
 int osprd_ioctl(struct inode *inode, struct file *filp,
 		unsigned int cmd, unsigned long arg)
 {
+  printk("entered function\n");
 	osprd_info_t *d = file2osprd(filp);	// device info
 	int r = 0;			// return value: initially 0
 
@@ -253,7 +254,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		// to write-lock the ramdisk;
 		if (filp_writable)
 		{
-
+      printk("attempting to acquire write lock\n");
 		  // lock request must block using 'd->blockq' until:
 		  // 1) no other process holds a write lock;
 	    // 2) either the request is for a read lock, or no other process
@@ -263,8 +264,8 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 	    //    lock.
 	    // block at least until 'd->ticket_tail == local_ticket'
 	    int wait_return = wait_event_interruptible(d->blockq, d->num_write == 0 && 
-	                                                          d->num_read == 0 && 
-	                                                          d->ticket_tail == local_ticket);
+	                                                        d->num_read == 0 && 
+	                                                        d->ticket_tail == local_ticket);
       if (wait_return == -ERESTARTSYS)
         return -ERESTARTSYS; 
 
@@ -275,6 +276,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		//otherwise attempt to read-lock the ramdisk.
 		else
 		{
+      printk("attempting to acquire read lock\n");
 		
 		  // lock request must block using 'd->blockq' until:
 		  // 1) no other process holds a write lock;
@@ -284,8 +286,9 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 	    //    that blocked earlier is still blocked waiting for the
 	    //    lock.
 	    // block at least until 'd->ticket_tail == local_ticket'
-	    int wait_return = wait_event_interruptible(d->blockq, d->num_write == 0 && 
-	                                                          d->ticket_tail == local_ticket);
+	    int wait_return = wait_event_interruptible(d->blockq, 
+                                          d->num_write == 0 && 
+	                                        d->ticket_tail == local_ticket);
 	                                                          
 	    if (wait_return == -ERESTARTSYS)
         return -ERESTARTSYS;   
@@ -293,7 +296,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
                                                       
 		}
 		
-		eprintk("Attempting to acquire\n");
+		//eprintk("Attempting to acquire\n");
 		r = -ENOTTY;
 
 	} else if (cmd == OSPRDIOCTRYACQUIRE) {
