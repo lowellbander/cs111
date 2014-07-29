@@ -244,7 +244,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		// Then, block at least until 'd->ticket_tail == local_ticket'.
 		// (Some of these operations are in a critical section and must
 		// be protected by a spinlock; which ones?)
-/*		
+		
 		// Set local variable to 'd->ticket_head' and increment 'd->ticket_head'
 		unsigned local_ticket = d->ticket_head;
 		d->ticket_head++;
@@ -253,6 +253,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		// to write-lock the ramdisk;
 		if (filp_writable)
 		{
+/*
 		  // lock request must block using 'd->blockq' until:
 		  // 1) no other process holds a write lock;
 	    // 2) either the request is for a read lock, or no other process
