@@ -247,8 +247,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		// be protected by a spinlock; which ones?)
 		
 		// Set local variable to 'd->ticket_head' and increment 'd->ticket_head'
-		unsigned local_ticket = d->ticket_head;
-		d->ticket_head++;
+		unsigned local_ticket = d->ticket_head++;
 
 		// If *filp is open for writing (filp_writable), then attempt
 		// to write-lock the ramdisk;
@@ -268,6 +267,8 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 	                                                          d->ticket_tail == local_ticket);
       if (wait_return == -ERESTARTSYS)
         return -ERESTARTSYS; 
+
+      // osp_spin_lock(&d->mutex)
         
 		  
 		}
