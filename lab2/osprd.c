@@ -228,6 +228,7 @@ static int osprd_close_last(struct inode *inode, struct file *filp)
 int osprd_ioctl(struct inode *inode, struct file *filp,
 		unsigned int cmd, unsigned long arg)
 {
+  printk("entered function\n");
 	osprd_info_t *d = file2osprd(filp);	// device info
 	int r = 0;			// return value: initially 0
 
@@ -257,6 +258,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		pid_list_t curr = d->read_lock_pids;
 		while(curr != NULL)
 		{
+<<<<<<< HEAD
 			if(curr->pid == current->pid)
 			{
 			osp_spin_unlock(&d->mutex);
@@ -317,9 +319,30 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 			d->read_lock_pids = kmalloc(sizeof(pid_list_t), GFP_ATOMIC);
 			d->read_lock_pids->pid = current->pid;
 			d->read_lock_pids->next = NULL;
+=======
+      printk("attempting to acquire write lock\n");
+		  // lock request must block using 'd->blockq' until:
+		  // 1) no other process holds a write lock;
+	    // 2) either the request is for a read lock, or no other process
+	    //    holds a read lock; and
+	    // 3) lock requests should be serviced in order, so no process
+	    //    that blocked earlier is still blocked waiting for the
+	    //    lock.
+	    // block at least until 'd->ticket_tail == local_ticket'
+	    int wait_return = wait_event_interruptible(d->blockq, d->num_write == 0 && 
+	                                                        d->num_read == 0 && 
+	                                                        d->ticket_tail == local_ticket);
+      if (wait_return == -ERESTARTSYS)
+        return -ERESTARTSYS; 
+
+      // osp_spin_lock(&d->mutex)
+        
+		  
+>>>>>>> 9af61c0b4ad1eababa8fd852b0548546ea964e33
 		}
 		else
 		{
+<<<<<<< HEAD
 			prev->next = kmalloc(sizeof(pid_list_t), GFP_ATOMIC);
 			prev->next->pid = current->pid;
 			prev->next->next = NULL;
@@ -327,6 +350,30 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 	}
 	d->ticket_tail++;
 	osp_spin_unlock(&d->mutex);
+=======
+      printk("attempting to acquire read lock\n");
+		
+		  // lock request must block using 'd->blockq' until:
+		  // 1) no other process holds a write lock;
+	    // 2) either the request is for a read lock, or no other process
+	    //    holds a read lock; and
+	    // 3) lock requests should be serviced in order, so no process
+	    //    that blocked earlier is still blocked waiting for the
+	    //    lock.
+	    // block at least until 'd->ticket_tail == local_ticket'
+	    int wait_return = wait_event_interruptible(d->blockq, 
+                                          d->num_write == 0 && 
+	                                        d->ticket_tail == local_ticket);
+	                                                          
+	    if (wait_return == -ERESTARTSYS)
+        return -ERESTARTSYS;   
+ 
+                                                      
+		}
+		
+		//eprintk("Attempting to acquire\n");
+		r = -ENOTTY;
+>>>>>>> 9af61c0b4ad1eababa8fd852b0548546ea964e33
 
 	} else if (cmd == OSPRDIOCTRYACQUIRE) {
 
