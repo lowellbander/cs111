@@ -245,6 +245,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 {
   printk("entered function\n");
 	osprd_info_t *d = file2osprd(filp);	// device info
+  if (!d) return -1; // bad filp
 	int r = 0;			// return value: initially 0
 
 	// is file open for writing?
@@ -254,8 +255,6 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 	(void) filp_writable, (void) d;
 
 	// Set 'r' to the ioctl's return value: 0 on success, negative on error
-
-  if (!d) return -1; // bad filp
 
 	if (cmd == OSPRDIOCACQUIRE) {
 
