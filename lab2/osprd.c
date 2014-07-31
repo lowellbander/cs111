@@ -335,7 +335,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 	    // block at least until 'd->ticket_tail == local_ticket'
 	    int wait_return = wait_event_interruptible(d->blockq, d->num_write == 0 && 
 	                                                          d->num_read == 0 && 
-	                                                          d->ticket_tail >= local_ticket);
+	                                                        d->ticket_tail >= local_ticket);
       printk("after wait return\n");
       if (wait_return == -ERESTARTSYS)
         return -ERESTARTSYS; 
