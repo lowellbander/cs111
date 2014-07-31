@@ -13,7 +13,7 @@ static char const *script_name;
 static void
 usage (void)
 {
-  error (1, 0, "usage: %s [-pt] SCRIPT-FILE", program_name);
+  error (1, 0, "usage: %s [-pt] SCRIPT-FILE [N-THREADS]", program_name);
 }
 
 static int
@@ -42,7 +42,7 @@ main (int argc, char **argv)
  options_exhausted:;
 
   // There must be exactly one file argument.
-  if (optind != argc - 1)
+  if (argc != 3 && argc != 4)
     usage ();
 
   script_name = argv[optind];
