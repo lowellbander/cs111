@@ -461,7 +461,7 @@ void* run(void* context)
 }
 
 void
-exe_stream (command_stream_t stream, int time_travel)
+exe_stream (command_stream_t stream, int time_travel, int nThreads)
 {
   if (time_travel == 0)
   {
@@ -475,6 +475,13 @@ exe_stream (command_stream_t stream, int time_travel)
     cmd_stream_t cmds = initialize_cmds(stream);
     input_dependencies (cmds);
     
+    if (nThreads == -1)
+      printf("executing with unlimited threads\n");
+    else
+      printf("executing with at most %i threads\n", nThreads);
+    return;
+
+
     //build a list of threads, one per command
     threads = checked_malloc(sizeof(struct thread_stream));
     cmd_node_t ptr = cmds->head;

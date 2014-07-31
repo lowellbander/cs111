@@ -4,6 +4,7 @@
 #include <error.h>
 #include <getopt.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "command.h"
 
@@ -45,6 +46,9 @@ main (int argc, char **argv)
   if (argc != 3 && argc != 4)
     usage ();
 
+  char* pEnd;
+  int nThreads = (argc == 4) ? strtol(argv[argc-1], &pEnd, 10) : -1;
+
   script_name = argv[optind];
   FILE *script_stream = fopen (script_name, "r");
   if (! script_stream)
@@ -61,7 +65,7 @@ main (int argc, char **argv)
 	    print_command (command);
 	  }
   else
-    exe_stream(command_stream, time_travel);
+    exe_stream(command_stream, time_travel, nThreads);
 
   return print_tree || !last_command ? 0 : command_status (last_command);
 }
