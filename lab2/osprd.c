@@ -143,18 +143,22 @@ static void osprd_process_request(osprd_info_t *d, struct request *req)
 	// If reading request
 	if (rq_data_dir(req) == READ)
 	{
+    osp_spin_lock(&d->mutex);
 	  // Read to buffer sector from data
 	  memcpy (req->buffer, 
 	          d->data + req->sector * SECTOR_SIZE, 
 	          req->current_nr_sectors * SECTOR_SIZE);
+    osp_spin_unlock(&d->mutex);
 	}
 	// Writing request
 	else if (rq_data_dir(req) == WRITE)
 	{
+    osp_spin_lock(&d->mutex);
 	  // Write to data sector from buffer
 	  memcpy (d->data + req->sector * SECTOR_SIZE, 
 	          req->buffer, 
 	          req->current_nr_sectors * SECTOR_SIZE);
+    osp_spin_unlock(&d->mutex);
 	}
 	else
     end_request(req, 0);
@@ -450,7 +454,6 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		  if (d->num_write == 0 && d->num_read == 0)
 		  {
 		    d->num_write++;
-		    d->ticket_tail++;
 		    // If a process acquires a lock, mark this fact by setting
 		    // 'filp->f_flags |= F_OSPRD_LOCKED'.
         filp->f_flags |= F_OSPRD_LOCKED;
@@ -490,7 +493,6 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
           curr->next->next = NULL;
         }
 		    d->num_read++;
-		    d->ticket_tail++;
 		    // If a process acquires a lock, mark this fact by setting
 		    // 'filp->f_flags |= F_OSPRD_LOCKED'.
         filp->f_flags |= F_OSPRD_LOCKED;
@@ -579,6 +581,7 @@ static void osprd_setup(osprd_info_t *d)
 	d->num_write = 0;
 	d->num_read = 0;
 	d->write_pid = -1;
+  d->read_pids = NULL;
 }
 
 
