@@ -255,6 +255,8 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 
 	// Set 'r' to the ioctl's return value: 0 on success, negative on error
 
+  if (!d) return -1; // bad filp
+
 	if (cmd == OSPRDIOCACQUIRE) {
 
 		// EXERCISE: Lock the ramdisk.
@@ -291,9 +293,6 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		// Then, block at least until 'd->ticket_tail == local_ticket'.
 		// (Some of these operations are in a critical section and must
 		// be protected by a spinlock; which ones?)
-		
-		if (d == NULL)
-		  return -1;
 		
 		// Protect critical section
 		osp_spin_lock(&d->mutex);
@@ -418,9 +417,6 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		// Your code here (instead of the next two lines).
 		eprintk("Attempting to try acquire\n");
 		
-		if (d == NULL)
-		  return -1;
-		  
 		// Protect critical section
 		osp_spin_lock(&d->mutex);
 	
@@ -520,8 +516,6 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		// you need, and return 0.
 
     printk("attempting to release\n");
-    if (d == NULL)
-		  return -1;
 		  
     // If the file hasn't locked the ramdisk, return -EINVAL.
 		if ((filp->f_flags & F_OSPRD_LOCKED) == 0)
