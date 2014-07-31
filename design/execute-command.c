@@ -445,18 +445,23 @@ void* run(void* context)
 {
   cmd_node_t node = context;
 
+  printf("starting command %i\n", node->id);
+
   // illustrates that commands not run sequentially
-  //sleep(rand() % 5); 
+  sleep(rand() % 5); 
 
   // wait for all dependencies to finish execution
   int i;
   int len = sizeof(node->depend_id)/sizeof(int);
   for (i = 0; node->depend_id[i] != 0; ++i)
   {
+    printf("command %i waiting for command %i to finish\n", node->id, node->depend_id[i]);
     thread_node_t t = get_thread_node(node->depend_id[i]);
     pthread_join(*t->thread, NULL);
+    printf("command %i done waiting for command %i to finish\n", node->id, node->depend_id[i]);
   }
   execute_command(node->self);
+  printf("finished command %i\n", node->id);
   return NULL;
 }
 
@@ -479,7 +484,6 @@ exe_stream (command_stream_t stream, int time_travel, int nThreads)
       printf("executing with unlimited threads\n");
     else
       printf("executing with at most %i threads\n", nThreads);
-    return;
 
 
     //build a list of threads, one per command
