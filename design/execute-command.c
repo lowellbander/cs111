@@ -465,7 +465,7 @@ void* run(void* context)
   return NULL;
 }
 
-void do_unlimited(int nThreads, cmd_stream_t cmds)
+void do_unlimited(cmd_stream_t cmds)
 {
     //build a list of threads, one per command
     threads = checked_malloc(sizeof(struct thread_stream));
@@ -522,10 +522,12 @@ exe_stream (command_stream_t stream, int time_travel, int nThreads)
     if (nThreads == -1)
     {
       printf("executing with unlimited threads\n");
-      do_unlimited(nThreads, cmds);
+      do_unlimited(cmds);
     }
     else
+    {
       printf("executing with at most %i threads\n", nThreads);
+    }
 
 
   }
