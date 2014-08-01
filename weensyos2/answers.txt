@@ -1,0 +1,60 @@
+Name: Lowell Bander
+UCLA ID: 204 156 534
+
+Name: Nicole Yee
+UCLA ID: 403 796 037
+
+-------------------------------------------------------------------------------
+
+Response to Exercise 1:
+
+The name of the scheduling algorithm is: Round Robin
+
+
+(Exercise 2 is a coding exercise)
+
+
+Response to Exercise 3:
+
+Average turnaround time for scheduling_algorithm 0: 
+schedos-1: 319*4 + 1 = 1277
+schedos-2: 319*4 + 2 = 1278
+schedos-3: 319*4 + 3 = 1279
+schedos-4: 319*4 + 4 = 1280
+Average = (1277 + 1278 + 1279 + 1280)/4 = 1278.5 ms
+
+Average turnaround time for scheduling_algorithm 1:
+schedos-1: 320
+schedos-2: 320 + 320 = 640
+schedos-3: 640 + 320 = 960
+schedos-4: 960 + 320 = 1280
+Average = (320 + 640 + 960 + 1280)/4 = 800 ms
+
+Average wait time for scheduling_algorithm 0:
+schedos-1: 0
+schedos-2: 1
+schedos-3: 2
+schedos-4: 3
+Average = (0 + 1 + 2 + 3)/4 = 1.5 ms
+
+Average wait time for scheduling_algorithm 1:
+schedos-1: 0
+schedos-2: 320
+schedos-3: 320 + 320 = 640
+schedos-4: 640 + 320 = 960
+Average = (0 + 320 + 640 + 960)/4 = 480 ms
+
+Exercise 4:
+
+Did you complete Exercise 4A or Exercise 4B?
+
+
+Exercise 5:
+
+
+(Exercise 6 is a coding exercise)
+
+
+Anything else you'd like us to know:
+
+

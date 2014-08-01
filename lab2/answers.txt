@@ -20,3 +20,6 @@ Email: lowellbander@gmail.com
 
 
 # Add any other information you'd like us to have below this line.
+
+When ./lab2-tester.pl is run without any arguments, all tests succeed except 
+for #15. When run individually, test #15 succeeds.
