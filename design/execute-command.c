@@ -513,7 +513,7 @@ typedef enum status
   RUNNABLE,
 } status_t;
 
-status_t status(cmd_node_t cmd)
+status_t get_status(cmd_node_t cmd)
 {
   // done     =  -2  X  X  X  X
   // runnable =   0  X  X  X  X  
@@ -554,32 +554,39 @@ void print_status(status_t status)
   }
 }
 
-void do_limited(cmd_stream_t cmds, int nThreads)
+void* run_limited(void* context)
 {
-  pthread_t* threads = checked_malloc(nThreads*sizeof(pthread_t));
-  pthread_mutex_t* mutexes = checked_malloc(nThreads*sizeof(pthread_mutex_t));
-  // do I need to initialize the mutexes?
-  // http://stackoverflow.com/questions/14320041/
+  cmd_node_t cmd = context;
+  printf("in run_limited()\n");
 
-  cmd_node_t cmd;
-  bool working;
+  
+  return NULL;
+}
 
-  do {
-    working = false;
-    cmd = cmds->head;
-    while (cmd)
+typedef struct thread
+{
+  pthread_t thread;
+  pthread_mutex_t mutex;
+  bool used;
+} thread_t;
+
+thread_t* get_thread(thread_t* threads)
+{
+  int i = 0;
+  int len = sizeof(threads)/sizeof(thread_t);
+  int retval;
+  while (true)
+  {
+    retval = pthread_mutex_trylock(&threads[i].mutex);
+    if (retval == 0)
     {
-      printf("hi\n");
-      if (status(cmd) == RUNNABLE)
-      {
-        working = true;
-        // run the task
-        // update other tasks dependency list
-      }
-      cmd = cmd->next;
+      threads[i].used = true;
+      return &threads[i];
     }
-
-  } while (false); //TODO: working
+    if (++i == len)
+      i = 0;
+  }
+  return NULL;
 
   /*pthread_mutex_t mutex = mutexes[0];
   int retval = pthread_mutex_trylock(&mutex);
@@ -596,6 +603,58 @@ void do_limited(cmd_stream_t cmds, int nThreads)
   retval = pthread_mutex_trylock(&mutex);
   if (retval == 0)
     printf("success\n");*/
+}
+
+void do_limited(cmd_stream_t cmds, int nThreads)
+{
+  thread_t* threads = checked_malloc(nThreads*sizeof(thread_t));
+  int i;
+  for (i = 0; i < nThreads; ++i)
+    threads[i].used = false;
+  // do I need to initialize the mutexes?
+  // http://stackoverflow.com/questions/14320041/
+
+  cmd_node_t cmd;
+  bool keep_going;
+  thread_t* thread_p;
+  thread_node_t node = checked_malloc(sizeof(struct thread_node));
+
+  do {
+    keep_going = false;
+    cmd = cmds->head;
+    while (cmd)
+    {
+      status_t status = get_status(cmd);
+      print_status(status);
+      switch (status)
+      {
+        case WAITING:
+          keep_going = true;
+          break;
+        case RUNNABLE:
+          thread_p = get_thread(threads);
+        // run the task
+          //node->thread = &thread_p->thread;
+          pthread_create(&thread_p->thread, NULL, &run_limited, cmd);
+        // update other tasks dependency list
+          break;
+        case DONE:
+        default:
+          break;
+      }
+      break;
+      cmd = cmd->next;
+    }
+
+  } while (false); //TODO: keep_going
+
+  // wait for all the threads to finish
+  for (i = 0; i < nThreads; ++i)
+  {
+    if (threads[i].used)
+      pthread_join(threads[i].thread, NULL);
+  }
+
 }
 
 void
