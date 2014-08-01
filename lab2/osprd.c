@@ -151,10 +151,12 @@ static void osprd_process_request(osprd_info_t *d, struct request *req)
 	// Writing request
 	else if (rq_data_dir(req) == WRITE)
 	{
+    osp_spin_lock(&d->mutex);
 	  // Write to data sector from buffer
 	  memcpy (d->data + req->sector * SECTOR_SIZE, 
 	          req->buffer, 
 	          req->current_nr_sectors * SECTOR_SIZE);
+    osp_spin_unlock(&d->mutex);
 	}
 	else
     end_request(req, 0);
