@@ -1,12 +1,14 @@
-Name:
-UCLA ID:
+Name: Lowell Bander
+UCLA ID: 204 156 534
 
+Name: Nicole Yee
+UCLA ID: 403 796 037
 
 -------------------------------------------------------------------------------
 
 Response to Exercise 1:
 
-The name of the scheduling algorithm is:
+The name of the scheduling algorithm is: Round Robin
 
 
 (Exercise 2 is a coding exercise)
