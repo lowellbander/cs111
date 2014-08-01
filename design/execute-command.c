@@ -504,6 +504,12 @@ void do_unlimited(cmd_stream_t cmds)
     }
 }
 
+void do_limited(cmd_stream_t cmds, int nThreads)
+{
+  printf("hi\n");
+  pthread_t* threads = checked_malloc(nThreads*sizeof(pthread_t));
+}
+
 void
 exe_stream (command_stream_t stream, int time_travel, int nThreads)
 {
@@ -520,15 +526,9 @@ exe_stream (command_stream_t stream, int time_travel, int nThreads)
     input_dependencies (cmds);
     
     if (nThreads == -1)
-    {
-      printf("executing with unlimited threads\n");
       do_unlimited(cmds);
-    }
     else
-    {
-      printf("executing with at most %i threads\n", nThreads);
-    }
-
+      do_limited(cmds, nThreads);
 
   }
 }
