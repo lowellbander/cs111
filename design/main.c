@@ -42,8 +42,8 @@ main (int argc, char **argv)
       }
  options_exhausted:;
 
-  // There must be exactly one file argument.
-  if (argc != 3 && argc != 4)
+  // check for valid syntax
+  if (argc != 2 && argc != 3 && argc != 4)
     usage ();
 
   char* pEnd;
