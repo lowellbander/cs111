@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <error.h>
+#include <errno.h>
 
 
 // to keep track of threads running commands in parallel
@@ -504,10 +505,97 @@ void do_unlimited(cmd_stream_t cmds)
     }
 }
 
+typedef enum status
+{
+  //TODO: explanations
+  WAITING,
+  DONE,
+  RUNNABLE,
+} status_t;
+
+status_t status(cmd_node_t cmd)
+{
+  // done     =  -2  X  X  X  X
+  // runnable =   0  X  X  X  X  
+  // runnable =  -1 -1 -1 -1  0
+  // waiting  =   1  2 -1  7  0
+  
+  if (cmd->depend_id[0] == 0)
+    return RUNNABLE;
+  if (cmd->depend_id[0] == -2)
+    return DONE;
+
+  int i;
+  for (i = 0; cmd->depend_id[i] != 0; ++i)
+  {
+    if (cmd->depend_id[i] > 0)
+      return WAITING;
+  }
+
+  return RUNNABLE;
+}
+
+void print_status(status_t status)
+{
+  switch (status)
+  {
+    case WAITING:
+      printf("WAITING\n");
+      break;
+    case DONE:
+      printf("DONE\n");
+      break;
+    case RUNNABLE:
+      printf("RUNNABLE\n");
+      break;
+    default:
+      printf("ERROR\n");
+      break;
+  }
+}
+
 void do_limited(cmd_stream_t cmds, int nThreads)
 {
-  printf("hi\n");
   pthread_t* threads = checked_malloc(nThreads*sizeof(pthread_t));
+  pthread_mutex_t* mutexes = checked_malloc(nThreads*sizeof(pthread_mutex_t));
+  // do I need to initialize the mutexes?
+  // http://stackoverflow.com/questions/14320041/
+
+  cmd_node_t cmd;
+  bool working;
+
+  do {
+    working = false;
+    cmd = cmds->head;
+    while (cmd)
+    {
+      printf("hi\n");
+      if (status(cmd) == RUNNABLE)
+      {
+        working = true;
+        // run the task
+        // update other tasks dependency list
+      }
+      cmd = cmd->next;
+    }
+
+  } while (false); //TODO: working
+
+  /*pthread_mutex_t mutex = mutexes[0];
+  int retval = pthread_mutex_trylock(&mutex);
+  if (retval == 0)
+    printf("success\n");
+  retval = pthread_mutex_trylock(&mutex);
+  if (retval == 0)
+    printf("success\n");
+  else if (retval == EBUSY)
+    printf("BUSY\n");
+  else
+    printf("failed: %i\n", retval);
+  retval = pthread_mutex_unlock(&mutex);
+  retval = pthread_mutex_trylock(&mutex);
+  if (retval == 0)
+    printf("success\n");*/
 }
 
 void
