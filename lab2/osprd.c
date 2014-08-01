@@ -133,11 +133,13 @@ static void osprd_process_request(osprd_info_t *d, struct request *req)
 	// Read about 'struct request' in <linux/blkdev.h>.
 	// Consider the 'req->sector', 'req->current_nr_sectors', and
 	// 'req->buffer' members, and the rq_data_dir() function.
-	
+
 	// Check for overwrite
 	if (req->sector + req->current_nr_sectors > nsectors)
+	{
 	  end_request(req, 0);
-
+	  return;
+	}
 	// If reading request
 	if (rq_data_dir(req) == READ)
 	{
@@ -158,7 +160,7 @@ static void osprd_process_request(osprd_info_t *d, struct request *req)
 	}
 	else
     end_request(req, 0);
-  
+    
 	end_request(req, 1);
 }
 
@@ -190,7 +192,6 @@ static int osprd_close_last(struct inode *inode, struct file *filp)
     printk("attempting to close and release\n");
 		if ((filp->f_flags & F_OSPRD_LOCKED) != 0)
 		{
-		  printk("inside filp flag\n");
 		  osp_spin_lock(&d->mutex);
 		  filp->f_flags &= !F_OSPRD_LOCKED;
 		  if (filp_writable)
@@ -220,9 +221,8 @@ static int osprd_close_last(struct inode *inode, struct file *filp)
 		      }
 		    }
 		  }
-		  wake_up_all(&d->blockq);
 		  osp_spin_unlock(&d->mutex);
-		  
+		  wake_up_all(&d->blockq);
 		}
 
 		// This line avoids compiler warnings; you may remove it.
@@ -327,7 +327,6 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		if (filp_writable)
 		{
       printk("attempting to acquire write lock\n");
-      printk("head: %d  |  tail: %d\n", d->ticket_head, d->ticket_tail);
 		  // lock request must block using 'd->blockq' until:
 		  // 1) no other process holds a write lock;
 	    // 2) either the request is for a read lock, or no other process
@@ -340,32 +339,25 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 	                                                          d->num_read == 0 && 
 	                                                        d->ticket_tail >= local_ticket);
       printk("after wait return\n");
-      printk("head: %d  |  tail: %d\n", d->ticket_head, d->ticket_tail);
       if (wait_return == -ERESTARTSYS)
-      {
-        printk("ERESTARTSYS WRITE\n");
         return -ERESTARTSYS; 
-      }
 
       // Protect critical section 
       osp_spin_lock(&d->mutex);
       d->write_pid = current->pid;
       d->num_write++;
       d->ticket_tail++;
-      printk("Updated write!!\n");
-      printk("head: %d  |  tail: %d\n", d->ticket_head, d->ticket_tail);
-      osp_spin_unlock(&d->mutex);
       // If a process acquires a lock, mark this fact by setting
 		  // 'filp->f_flags |= F_OSPRD_LOCKED'.
       filp->f_flags |= F_OSPRD_LOCKED;
-      
+      osp_spin_unlock(&d->mutex);
 		  
 		}
 		//otherwise attempt to read-lock the ramdisk.
 		else
 		{
       printk("attempting to acquire read lock\n");
-		  printk("head: %d  |  tail: %d\n", d->ticket_head, d->ticket_tail);
+		
 		  // lock request must block using 'd->blockq' until:
 		  // 1) no other process holds a write lock;
 	    // 2) either the request is for a read lock, or no other process
@@ -377,13 +369,10 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 	    int wait_return = wait_event_interruptible(d->blockq, 
                                           d->num_write == 0 && 
 	                                        d->ticket_tail >= local_ticket);
-	    printk("after wait return\n");
-	    printk("head: %d  |  tail: %d\n", d->ticket_head, d->ticket_tail);
+	    printk("after wait return\n");                                                      
 	    if (wait_return == -ERESTARTSYS)
-	    {
-	      printk("ERESTARTSYS READ\n");
         return -ERESTARTSYS;   
-      }
+      
       // Protect critical section
       osp_spin_lock(&d->mutex);
       // Add pid to end of list
@@ -407,8 +396,6 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
       
       d->num_read++;
       d->ticket_tail++;
-      printk("Updated tail and read!!\n");
-      printk("head: %d  |  tail: %d\n", d->ticket_head, d->ticket_tail);
       // If a process acquires a lock, mark this fact by setting
 		  // 'filp->f_flags |= F_OSPRD_LOCKED'.
       filp->f_flags |= F_OSPRD_LOCKED;
@@ -465,6 +452,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		  if (d->num_write == 0 && d->num_read == 0)
 		  {
 		    d->num_write++;
+		    d->ticket_tail++;
 		    // If a process acquires a lock, mark this fact by setting
 		    // 'filp->f_flags |= F_OSPRD_LOCKED'.
         filp->f_flags |= F_OSPRD_LOCKED;
@@ -473,7 +461,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
       else
       {
         osp_spin_unlock(&d->mutex);
-        eprintk("busy instead of blocking write\n");
+        eprintk("busy instead of blocking\n");
         return -EBUSY;
       }
       osp_spin_unlock(&d->mutex);
@@ -504,6 +492,7 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
           curr->next->next = NULL;
         }
 		    d->num_read++;
+		    d->ticket_tail++;
 		    // If a process acquires a lock, mark this fact by setting
 		    // 'filp->f_flags |= F_OSPRD_LOCKED'.
         filp->f_flags |= F_OSPRD_LOCKED;
@@ -512,7 +501,6 @@ int osprd_ioctl(struct inode *inode, struct file *filp,
 		  // OSPRDIOCACQUIRE would block if conditions above not met
 		  else
 		  {
-		    printk("BUSY instead of blocking read\n");
 		    osp_spin_unlock(&d->mutex);
 		    return -EBUSY;
 		  }
@@ -593,7 +581,6 @@ static void osprd_setup(osprd_info_t *d)
 	d->num_write = 0;
 	d->num_read = 0;
 	d->write_pid = -1;
-  d->read_pids = NULL;
 }
 
 
