@@ -605,10 +605,10 @@ void* run_limited(void* context)
   return NULL;
 }
 
-thread_t* get_thread(thread_t* threads)
+thread_t* get_thread(thread_t* threads, int len)
 {
   int i = 0;
-  int len = sizeof(threads)/sizeof(thread_t);
+  //int len = sizeof(threads)/sizeof(threads[0]);
   int retval;
   while (true)
   {
@@ -619,7 +619,7 @@ thread_t* get_thread(thread_t* threads)
       printf("thread %i is available, so giving you that one\n", i + 1);
       return &threads[i];
     }
-    printf("thread %i is busy\n", i + 1);
+    //printf("thread %i is busy\n", i + 1);
     if (++i == len)
       i = 0;
   }
@@ -658,7 +658,7 @@ void do_limited(cmd_stream_t cmds, int nThreads)
           keep_going = true;
           break;
         case RUNNABLE:
-          thread_p = get_thread(threads);
+          thread_p = get_thread(threads, nThreads);
           node->cmd = *cmd;
           node->thread = thread_p;
         // run the task
