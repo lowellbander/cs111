@@ -61,6 +61,7 @@ struct cmd_node
   // After cmd_node id finishes, id turns negative
   int* depend_id;
   pthread_mutex_t mutex;
+  bool started;
 };		
 
 //global
@@ -294,6 +295,7 @@ initialize_cmds (command_stream_t command_stream)
   {
     cmd_node_t node = checked_malloc(sizeof(struct cmd_node));
     node->id = id;
+    node->started = false;
     node->self = command;
     node->next = NULL;
     node->depends = get_file_depends(command);
@@ -644,10 +646,15 @@ void do_limited(cmd_stream_t cmds, int nThreads)
     cmd = cmds->head;
     while (cmd)
     {
+      if (cmd->started) 
+      {
+        cmd = cmd->next;
+        continue;
+      }
       //sleep(1);
-      printf("checking command %i\n", cmd->id);
+      //printf("checking command %i\n", cmd->id);
       status_t status = get_status(cmd);
-      print_status(status);
+      //print_status(status);
 
       node_t* node = checked_malloc(sizeof(node_t));
       thread_t* thread_p;
@@ -661,6 +668,7 @@ void do_limited(cmd_stream_t cmds, int nThreads)
           thread_p = get_thread(threads, nThreads);
           node->cmd = *cmd;
           node->thread = thread_p;
+          cmd->started = true;
         // run the task
           printf("calling pthread_create() ... \n");
           pthread_create(&thread_p->thread, NULL, &run_limited, node);
