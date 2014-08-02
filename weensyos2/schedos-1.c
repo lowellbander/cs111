@@ -18,16 +18,23 @@
 #define PRINTCHAR	('1' | 0x0C00)
 #endif
 
+#ifndef PRIORITY
+#define PRIORITY 3
+#endif
+
 void
 start(void)
 {
 	int i;
 
+	sys_set_priority(PRIORITY);
 	for (i = 0; i < RUNCOUNT; i++) {
 		// Write characters to the console, yielding after each one.
-		*cursorpos++ = PRINTCHAR;
+		sys_print(PRINTCHAR);
+		//*cursorpos++ = PRINTCHAR;
 		sys_yield();
 	}
+	
 /*
 	// Yield forever.
 	while (1)

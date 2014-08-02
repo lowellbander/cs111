@@ -65,7 +65,7 @@ start(void)
 
 	// Set up hardware (schedos-x86.c)
 	segments_init();
-	interrupt_controller_init(0);
+	interrupt_controller_init(1);
 	console_clear();
 
 	// Initialize process descriptors as empty
@@ -91,6 +91,11 @@ start(void)
 
 		// Mark the process as runnable!
 		proc->p_state = P_RUNNABLE;
+		
+		// Initialize all priority levels to 0 (highest priority)
+		// This lets all processes run once so they may set their own priority
+		proc->p_priority = 0;
+		proc->p_times_run = 0;
 	}
 
 	// Initialize the cursor-position shared variable to point to the
@@ -98,9 +103,9 @@ start(void)
 	cursorpos = (uint16_t *) 0xB8000;
 
 	// Initialize the scheduling algorithm.
-	scheduling_algorithm = 1;
+	scheduling_algorithm = 0;
 
-	// Switch to the first process.
+	// Switch to the first process
 	run(&proc_array[1]);
 
 	// Should never get here!
@@ -147,15 +152,20 @@ interrupt(registers_t *reg)
 		current->p_exit_status = reg->reg_eax;
 		schedule();
 
-	case INT_SYS_USER1:
-		// 'sys_user*' are provided for your convenience, in case you
-		// want to add a system call.
-		/* Your code here (if you want). */
-		run(current);
+	case INT_SYS_SET_PRIORITY:
+		// 'sys_set_priority' sets the priority of the process
+		// Process is allowed to set its own priority
+		current->p_priority = reg->reg_eax;
+		// Let all processes set priority first before running anything
+		if (current->p_pid == (NPROCS - 1))
+			schedule();
+		else
+			run(current+1);
 
-	case INT_SYS_USER2:
-		/* Your code here (if you want). */
-		run(current);
+	case INT_SYS_PRINT:
+		// Prints character to console (will not be interrupted)
+		*cursorpos++ = reg->reg_eax;
+		schedule();
 
 	case INT_CLOCK:
 		// A clock interrupt occurred (so an application exhausted its
@@ -202,6 +212,7 @@ schedule(void)
 				run(&proc_array[pid]);
 		}
 	
+	// Exercise 2:
 	// Priority Scheduling	
 	else if (scheduling_algorithm == 1)
 	{
@@ -215,8 +226,38 @@ schedule(void)
 	      pid = (pid + 1) % NPROCS;
 	  }
 	}
-		
-		
+	
+	// Exercise 4A:
+	// Priority scheduling, but processes may set their own priority level
+	else if (scheduling_algorithm == 2)
+	{
+		int temp_pid = -1;
+		int i = 1;
+		// Go through all processes, loop back if never found a RUNNABLE process
+		while ((i < NPROCS && NPROCS > 1) || temp_pid == -1)
+		{
+				if (proc_array[i].p_state == P_RUNNABLE)
+				{
+					// First RUNNABLE process found or
+					// Found process with higher priority or
+					// Found process with same priority but has run less times
+					if (temp_pid == -1 ||
+							proc_array[i].p_priority < proc_array[temp_pid].p_priority ||
+							(proc_array[temp_pid].p_priority == proc_array[i].p_priority &&
+					       proc_array[i].p_times_run <= proc_array[temp_pid].p_times_run))
+						temp_pid = i;
+				}
+				// Never found a RUNNABLE process after going through all of them
+				// Loop back to find one
+				if (temp_pid == -1 && i == NPROCS - 1)
+					i = 1;
+				else
+					++i;
+  	}
+  	// Increment times_run for this process and run
+ 		proc_array[temp_pid].p_times_run++;
+ 		run(&proc_array[temp_pid]);
+	}
 
 	// If we get here, we are running an unknown scheduling algorithm.
 	cursorpos = console_printf(cursorpos, 0x100, "\nUnknown scheduling algorithm %d\n", scheduling_algorithm);

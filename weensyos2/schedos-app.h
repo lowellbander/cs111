@@ -61,4 +61,35 @@ sys_exit(int status)
     loop: goto loop; // Convince GCC that function truly does not return.
 }
 
+/*****************************************************************************
+ * sys_set_priority
+ *
+ *   Set own priority level
+ *
+ *****************************************************************************/
+
+static inline void
+sys_set_priority(int priority)
+{
+	asm volatile("int %0\n"
+		     				: : "i" (INT_SYS_SET_PRIORITY),
+		     						"a" (priority)
+		     				: "cc", "memory");
+}
+
+/*****************************************************************************
+ * sys_print
+ *
+ *   Prints the character atomically to console
+ *
+ *****************************************************************************/
+
+static inline void
+sys_print(uint16_t c)
+{
+	asm volatile("int %0\n"
+		     				: : "i" (INT_SYS_PRINT),
+		     						"a" (c)
+		     				: "cc", "memory");
+}
 #endif
