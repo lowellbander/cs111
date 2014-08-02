@@ -76,6 +76,12 @@ Implemented scheduling_algorithm 2
 
 
 Exercise 5:
+The first known timer interrupt occured during process 4. When a process is 
+interrupted, it is unable to print to the screen and 4 is the first one that 
+does not print during each cycle. The first four cycles function as normal
+(all processes print once), but during the fifth cycle, process 4 does not
+print, indicating that it was interuppted.
+
 
 
 (Exercise 6 is a coding exercise)
