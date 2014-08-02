@@ -47,7 +47,16 @@ main (int argc, char **argv)
     usage ();
 
   char* pEnd;
-  int nThreads = (argc == 4) ? strtol(argv[argc-1], &pEnd, 10) : -1;
+  //int nThreads = (argc == 4) ? strtol(argv[argc-1], &pEnd, 10) : -1;
+  int nThreads = -1;
+  if (argc == 4)
+  {
+    int n = strtol(argv[argc-1], &pEnd, 10);
+    if (n <= 0)
+      error(1, 0, "N-THREADS must be positive\n");
+    else
+      nThreads = n;
+  }
 
   script_name = argv[optind];
   FILE *script_stream = fopen (script_name, "r");
