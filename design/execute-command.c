@@ -559,6 +559,7 @@ void print_status(status_t status)
 
 typedef struct thread
 {
+  int id; // for debug
   pthread_t thread;
   pthread_mutex_t mutex;
   bool used;
@@ -573,12 +574,32 @@ typedef struct node
 void* run_limited(void* context)
 {
   node_t* node = context;
-  printf("in run_limited()\n");
+  printf("starting command %i with thread %i\n", node->cmd->id, node->thread->id);
+
+  //illustrates that commands are not run sequentially
+  //sleep(rand() % 5);
+
   execute_command(node->cmd->self);
   // update other tasks dependency list
-  //cmd_node_t cmd = 
+  cmd_node_t cmd = global_stream->head;
+  while (cmd)
+  {
+    pthread_mutex_lock(&cmd->mutex);
+    int i;
+    int id = node->cmd->id;
+    for (i = 0; cmd->depend_id[i] != 0; ++i)
+    {
+      if (cmd->depend_id[i] == id)
+        cmd->depend_id[i] = -1;
+    }
+
+    pthread_mutex_unlock(&cmd->mutex);
+    cmd = cmd->next;
+  }
   
 
+  node->cmd->depend_id[0] = -2; // command is done
+  printf("finished command %i\n", node->cmd->id);
   pthread_mutex_unlock(&node->thread->mutex);
   return NULL;
 }
@@ -607,7 +628,10 @@ void do_limited(cmd_stream_t cmds, int nThreads)
   thread_t* threads = checked_malloc(nThreads*sizeof(thread_t));
   int i;
   for (i = 0; i < nThreads; ++i)
+  {
+    threads[i].id = i + 1;
     threads[i].used = false;
+  }
 
   cmd_node_t cmd;
   bool keep_going;
@@ -619,6 +643,7 @@ void do_limited(cmd_stream_t cmds, int nThreads)
     cmd = cmds->head;
     while (cmd)
     {
+      sleep(1);
       status_t status = get_status(cmd);
       print_status(status);
       switch (status)
@@ -637,7 +662,7 @@ void do_limited(cmd_stream_t cmds, int nThreads)
         default:
           break;
       }
-      break;
+      //break;
       cmd = cmd->next;
     }
 
@@ -646,9 +671,11 @@ void do_limited(cmd_stream_t cmds, int nThreads)
   // wait for all the threads to finish
   for (i = 0; i < nThreads; ++i)
   {
-    //printf("i: %i\n", i);
     if (threads[i].used)
+    {
+      printf("i: %i\n", i);
       pthread_join(threads[i].thread, NULL);
+    }
   }
 
 }
