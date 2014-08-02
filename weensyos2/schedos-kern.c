@@ -105,8 +105,7 @@ start(void)
 	// Initialize the scheduling algorithm.
 	scheduling_algorithm = 2;
 
-	// Switch to the first process and update times_run
-	proc_array[1].p_times_run++;
+	// Switch to the first process
 	run(&proc_array[1]);
 
 	// Should never get here!
@@ -157,7 +156,11 @@ interrupt(registers_t *reg)
 		// 'sys_set_priority' sets the priority of the process
 		// Process is allowed to set its own priority
 		current->p_priority = reg->reg_eax;
-		run(current);
+		// Let all processes set priority first before running
+		if (current->p_pid == (NPROCS - 1))
+			schedule();
+		else
+			run(current+1);
 
 	case INT_SYS_USER2:
 		/* Your code here (if you want). */
@@ -238,7 +241,7 @@ schedule(void)
 					if (temp_pid == -1 ||
 							proc_array[i].p_priority < proc_array[temp_pid].p_priority ||
 							(proc_array[temp_pid].p_priority == proc_array[i].p_priority &&
-					       proc_array[i].p_times_run >= proc_array[temp_pid].p_times_run))
+					       proc_array[i].p_times_run <= proc_array[temp_pid].p_times_run))
 						temp_pid = i;
 				}
 				// Never found a RUNNABLE process after going through all of them
