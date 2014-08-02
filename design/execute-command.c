@@ -554,21 +554,28 @@ void print_status(status_t status)
   }
 }
 
-void* run_limited(void* context)
-{
-  cmd_node_t cmd = context;
-  printf("in run_limited()\n");
-
-  
-  return NULL;
-}
-
 typedef struct thread
 {
   pthread_t thread;
   pthread_mutex_t mutex;
   bool used;
 } thread_t;
+
+typedef struct node
+{
+  thread_t* thread;
+  cmd_node_t cmd;
+} node_t;
+
+void* run_limited(void* context)
+{
+  node_t* node = context;
+  printf("in run_limited()\n");
+  execute_command(node->cmd->self);
+  pthread_mutex_unlock(&node->thread->mutex);
+  
+  return NULL;
+}
 
 thread_t* get_thread(thread_t* threads)
 {
@@ -617,7 +624,7 @@ void do_limited(cmd_stream_t cmds, int nThreads)
   cmd_node_t cmd;
   bool keep_going;
   thread_t* thread_p;
-  thread_node_t node = checked_malloc(sizeof(struct thread_node));
+  node_t node;
 
   do {
     keep_going = false;
@@ -633,9 +640,10 @@ void do_limited(cmd_stream_t cmds, int nThreads)
           break;
         case RUNNABLE:
           thread_p = get_thread(threads);
+          node.cmd = cmd;
+          node.thread = thread_p;
         // run the task
-          //node->thread = &thread_p->thread;
-          pthread_create(&thread_p->thread, NULL, &run_limited, cmd);
+          pthread_create(&thread_p->thread, NULL, &run_limited, &node);
         // update other tasks dependency list
           break;
         case DONE:
@@ -646,11 +654,12 @@ void do_limited(cmd_stream_t cmds, int nThreads)
       cmd = cmd->next;
     }
 
-  } while (false); //TODO: keep_going
+  } while (keep_going); //TODO: keep_going
 
   // wait for all the threads to finish
   for (i = 0; i < nThreads; ++i)
   {
+    //printf("i: %i\n", i);
     if (threads[i].used)
       pthread_join(threads[i].thread, NULL);
   }
