@@ -12,7 +12,6 @@
 #include <error.h>
 #include <errno.h>
 
-
 // to keep track of threads running commands in parallel
 typedef struct thread_stream *thread_stream_t;
 typedef struct thread_node *thread_node_t;
@@ -50,6 +49,9 @@ struct cmd_stream
   cmd_node_t tail;
 };
 
+//global
+cmd_stream_t global_stream;
+
 struct cmd_node
 {
   // id starts at 1
@@ -61,6 +63,7 @@ struct cmd_node
   // id of cmd_nodes it is dependent on, end of array = 0
   // After cmd_node id finishes, id turns negative
   int* depend_id;
+  pthread_mutex_t mutex;
 };		
 
 struct thread_node
@@ -573,6 +576,7 @@ void* run_limited(void* context)
   printf("in run_limited()\n");
   execute_command(node->cmd->self);
   // update other tasks dependency list
+  //cmd_node_t cmd = 
   
 
   pthread_mutex_unlock(&node->thread->mutex);
@@ -637,7 +641,7 @@ void do_limited(cmd_stream_t cmds, int nThreads)
       cmd = cmd->next;
     }
 
-  } while (keep_going); //TODO: keep_going
+  } while (keep_going);
 
   // wait for all the threads to finish
   for (i = 0; i < nThreads; ++i)
@@ -660,14 +664,13 @@ exe_stream (command_stream_t stream, int time_travel, int nThreads)
   }
   else
   {
-    
     cmd_stream_t cmds = initialize_cmds(stream);
+    global_stream = cmds;
     input_dependencies (cmds);
     
     if (nThreads == -1)
       do_unlimited(cmds);
     else
       do_limited(cmds, nThreads);
-
   }
 }
