@@ -615,8 +615,10 @@ thread_t* get_thread(thread_t* threads)
     if (retval == 0)
     {
       threads[i].used = true;
+      printf("thread %i is available, so giving you that one\n", i + 1);
       return &threads[i];
     }
+    printf("thread %i is busy\n", i + 1);
     if (++i == len)
       i = 0;
   }
@@ -643,7 +645,8 @@ void do_limited(cmd_stream_t cmds, int nThreads)
     cmd = cmds->head;
     while (cmd)
     {
-      sleep(1);
+      //sleep(1);
+      printf("checking command %i\n", cmd->id);
       status_t status = get_status(cmd);
       print_status(status);
       switch (status)
@@ -656,6 +659,7 @@ void do_limited(cmd_stream_t cmds, int nThreads)
           node.cmd = cmd;
           node.thread = thread_p;
         // run the task
+          printf("calling pthread_create() ... \n");
           pthread_create(&thread_p->thread, NULL, &run_limited, &node);
           break;
         case DONE:
@@ -673,8 +677,8 @@ void do_limited(cmd_stream_t cmds, int nThreads)
   {
     if (threads[i].used)
     {
-      printf("i: %i\n", i);
       pthread_join(threads[i].thread, NULL);
+      printf("thread %i done\n", i + 1);
     }
   }
 
