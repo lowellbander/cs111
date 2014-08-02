@@ -513,7 +513,7 @@ typedef enum status
   RUNNABLE,
 } status_t;
 
-status_t status(cmd_node_t cmd)
+status_t get_status(cmd_node_t cmd)
 {
   // done     =  -2  X  X  X  X
   // runnable =   0  X  X  X  X  
@@ -554,48 +554,99 @@ void print_status(status_t status)
   }
 }
 
+typedef struct thread
+{
+  pthread_t thread;
+  pthread_mutex_t mutex;
+  bool used;
+} thread_t;
+
+typedef struct node
+{
+  thread_t* thread;
+  cmd_node_t cmd;
+} node_t;
+
+void* run_limited(void* context)
+{
+  node_t* node = context;
+  printf("in run_limited()\n");
+  execute_command(node->cmd->self);
+  // update other tasks dependency list
+  
+
+  pthread_mutex_unlock(&node->thread->mutex);
+  return NULL;
+}
+
+thread_t* get_thread(thread_t* threads)
+{
+  int i = 0;
+  int len = sizeof(threads)/sizeof(thread_t);
+  int retval;
+  while (true)
+  {
+    retval = pthread_mutex_trylock(&threads[i].mutex);
+    if (retval == 0)
+    {
+      threads[i].used = true;
+      return &threads[i];
+    }
+    if (++i == len)
+      i = 0;
+  }
+  return NULL;
+}
+
 void do_limited(cmd_stream_t cmds, int nThreads)
 {
-  pthread_t* threads = checked_malloc(nThreads*sizeof(pthread_t));
-  pthread_mutex_t* mutexes = checked_malloc(nThreads*sizeof(pthread_mutex_t));
-  // do I need to initialize the mutexes?
-  // http://stackoverflow.com/questions/14320041/
+  thread_t* threads = checked_malloc(nThreads*sizeof(thread_t));
+  int i;
+  for (i = 0; i < nThreads; ++i)
+    threads[i].used = false;
 
   cmd_node_t cmd;
-  bool working;
+  bool keep_going;
+  thread_t* thread_p;
+  node_t node;
 
   do {
-    working = false;
+    keep_going = false;
     cmd = cmds->head;
     while (cmd)
     {
-      printf("hi\n");
-      if (status(cmd) == RUNNABLE)
+      status_t status = get_status(cmd);
+      print_status(status);
+      switch (status)
       {
-        working = true;
+        case WAITING:
+          keep_going = true;
+          break;
+        case RUNNABLE:
+          thread_p = get_thread(threads);
+          node.cmd = cmd;
+          node.thread = thread_p;
         // run the task
-        // update other tasks dependency list
+          pthread_create(&thread_p->thread, NULL, &run_limited, &node);
+          break;
+        case DONE:
+        default:
+          break;
       }
+      break;
       cmd = cmd->next;
     }
 
-  } while (false); //TODO: working
+  } while (keep_going); //TODO: keep_going
 
-  /*pthread_mutex_t mutex = mutexes[0];
-  int retval = pthread_mutex_trylock(&mutex);
-  if (retval == 0)
-    printf("success\n");
-  retval = pthread_mutex_trylock(&mutex);
-  if (retval == 0)
-    printf("success\n");
-  else if (retval == EBUSY)
-    printf("BUSY\n");
-  else
-    printf("failed: %i\n", retval);
-  retval = pthread_mutex_unlock(&mutex);
-  retval = pthread_mutex_trylock(&mutex);
-  if (retval == 0)
-    printf("success\n");*/
+  // wait for all the threads to finish
+  for (i = 0; i < nThreads; ++i)
+  {
+    //printf("i: %i\n", i);
+    if (threads[i].used)
+      pthread_join(threads[i].thread, NULL);
+  }
+
 }
 
 void
