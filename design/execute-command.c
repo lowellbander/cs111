@@ -451,23 +451,18 @@ void* run(void* context)
 {
   cmd_node_t node = context;
 
-  printf("starting command %i\n", node->id);
-
   // illustrates that commands not run sequentially
-  sleep(rand() % 5); 
+  //sleep(rand() % 5); 
 
   // wait for all dependencies to finish execution
   int i;
   int len = sizeof(node->depend_id)/sizeof(int);
   for (i = 0; node->depend_id[i] != 0; ++i)
   {
-    printf("command %i waiting for command %i to finish\n", node->id, node->depend_id[i]);
     thread_node_t t = get_thread_node(node->depend_id[i]);
     pthread_join(*t->thread, NULL);
-    printf("command %i done waiting for command %i to finish\n", node->id, node->depend_id[i]);
   }
   execute_command(node->self);
-  printf("finished command %i\n", node->id);
   return NULL;
 }
 
@@ -512,10 +507,9 @@ void do_unlimited(cmd_stream_t cmds)
 
 typedef enum status
 {
-  //TODO: explanations
-  WAITING,
-  DONE,
-  RUNNABLE,
+  WAITING,    // the command is waiting for other commands to complete
+  DONE,       // the command has completed
+  RUNNABLE,   // the command can be run
 } status_t;
 
 status_t get_status(cmd_node_t cmd)
@@ -561,7 +555,6 @@ void print_status(status_t status)
 
 typedef struct thread
 {
-  int id; // for debug
   pthread_t thread;
   pthread_mutex_t mutex;
   bool used;
@@ -576,11 +569,9 @@ typedef struct node
 void* run_limited(void* context)
 {
   node_t* node = context;
-  printf("starting command %i with thread %i\n", node->cmd.id, node->thread->id);
 
   //illustrates that commands are not run sequentially
   //sleep(rand() % 5);
-  //sleep(node->cmd->id);
 
   execute_command(node->cmd.self);
   // update other tasks dependency list
@@ -600,9 +591,7 @@ void* run_limited(void* context)
     cmd = cmd->next;
   }
   
-
   node->cmd.depend_id[0] = -2; // command is done
-  printf("finished command %i\n", node->cmd.id);
   pthread_mutex_unlock(&node->thread->mutex);
   return NULL;
 }
@@ -610,7 +599,6 @@ void* run_limited(void* context)
 thread_t* get_thread(thread_t* threads, int len)
 {
   int i = 0;
-  //int len = sizeof(threads)/sizeof(threads[0]);
   int retval;
   while (true)
   {
@@ -618,10 +606,8 @@ thread_t* get_thread(thread_t* threads, int len)
     if (retval == 0)
     {
       threads[i].used = true;
-      printf("thread %i is available, so giving you that one\n", i + 1);
       return &threads[i];
     }
-    //printf("thread %i is busy\n", i + 1);
     if (++i == len)
       i = 0;
   }
@@ -633,10 +619,7 @@ void do_limited(cmd_stream_t cmds, int nThreads)
   thread_t* threads = checked_malloc(nThreads*sizeof(thread_t));
   int i;
   for (i = 0; i < nThreads; ++i)
-  {
-    threads[i].id = i + 1;
     threads[i].used = false;
-  }
 
   cmd_node_t cmd;
   bool keep_going;
@@ -651,10 +634,7 @@ void do_limited(cmd_stream_t cmds, int nThreads)
         cmd = cmd->next;
         continue;
       }
-      //sleep(1);
-      //printf("checking command %i\n", cmd->id);
       status_t status = get_status(cmd);
-      //print_status(status);
 
       node_t* node = checked_malloc(sizeof(node_t));
       thread_t* thread_p;
@@ -670,14 +650,12 @@ void do_limited(cmd_stream_t cmds, int nThreads)
           node->thread = thread_p;
           cmd->started = true;
         // run the task
-          printf("calling pthread_create() ... \n");
           pthread_create(&thread_p->thread, NULL, &run_limited, node);
           break;
         case DONE:
         default:
           break;
       }
-      //break;
       cmd = cmd->next;
     }
 
@@ -689,7 +667,6 @@ void do_limited(cmd_stream_t cmds, int nThreads)
     if (threads[i].used)
     {
       pthread_join(threads[i].thread, NULL);
-      printf("thread %i done\n", i + 1);
     }
   }
 
