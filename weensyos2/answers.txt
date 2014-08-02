@@ -47,6 +47,32 @@ Average = (0 + 320 + 640 + 960)/4 = 480 ms
 Exercise 4:
 
 Did you complete Exercise 4A or Exercise 4B?
+4a
+The basic idea is that each process's priority is set to 0, which is the 
+highest. This allows each process to run at least once and set their own 
+priority. Priorities are set within each schedos-*.c with #define. 
+To alternate between different processes with the same priority, there is a 
+counter to keep track of the number of times each process has run.
+
+schedos-1.c:
+Added a call to sys_set_priority.
+
+schedos-*.c:
+Added PRIORITY definitions
+
+schedos-app.h:
+Implemented sys_set_priority
+
+schedos-kern.h:
+Added to process descriptors: p_priority and p_times_run
+
+schedos.h:
+Changed name of INT_SYS_USER1 to INT_SYS_SET_PRIORITY
+
+schedos-kern.c:
+Added case in interrupt() for INT_SYS_SET_PRIORITY
+Initialized p_priority and p_times_run for each process to 0
+Implemented scheduling_algorithm 2
 
 
 Exercise 5:

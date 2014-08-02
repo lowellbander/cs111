@@ -156,7 +156,7 @@ interrupt(registers_t *reg)
 		// 'sys_set_priority' sets the priority of the process
 		// Process is allowed to set its own priority
 		current->p_priority = reg->reg_eax;
-		// Let all processes set priority first before running
+		// Let all processes set priority first before running anything
 		if (current->p_pid == (NPROCS - 1))
 			schedule();
 		else
@@ -227,10 +227,12 @@ schedule(void)
 	}
 	
 	// Exercise 4A:
+	// Priority scheduling, but processes may set their own priority level
 	else if (scheduling_algorithm == 2)
 	{
 		int temp_pid = -1;
 		int i = 1;
+		// Go through all processes, loop back if never found a RUNNABLE process
 		while ((i < NPROCS && NPROCS > 1) || temp_pid == -1)
 		{
 				if (proc_array[i].p_state == P_RUNNABLE)
