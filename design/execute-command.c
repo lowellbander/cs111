@@ -49,9 +49,6 @@ struct cmd_stream
   cmd_node_t tail;
 };
 
-//global
-cmd_stream_t global_stream;
-
 struct cmd_node
 {
   // id starts at 1
@@ -65,6 +62,9 @@ struct cmd_node
   int* depend_id;
   pthread_mutex_t mutex;
 };		
+
+//global
+cmd_node_t HEAD;
 
 struct thread_node
 {
@@ -568,25 +568,26 @@ typedef struct thread
 typedef struct node
 {
   thread_t* thread;
-  cmd_node_t cmd;
+  struct cmd_node cmd;
 } node_t;
 
 void* run_limited(void* context)
 {
   node_t* node = context;
-  printf("starting command %i with thread %i\n", node->cmd->id, node->thread->id);
+  printf("starting command %i with thread %i\n", node->cmd.id, node->thread->id);
 
   //illustrates that commands are not run sequentially
   //sleep(rand() % 5);
+  //sleep(node->cmd->id);
 
-  execute_command(node->cmd->self);
+  execute_command(node->cmd.self);
   // update other tasks dependency list
-  cmd_node_t cmd = global_stream->head;
+  cmd_node_t cmd = HEAD;
   while (cmd)
   {
     pthread_mutex_lock(&cmd->mutex);
     int i;
-    int id = node->cmd->id;
+    int id = node->cmd.id;
     for (i = 0; cmd->depend_id[i] != 0; ++i)
     {
       if (cmd->depend_id[i] == id)
@@ -598,8 +599,8 @@ void* run_limited(void* context)
   }
   
 
-  node->cmd->depend_id[0] = -2; // command is done
-  printf("finished command %i\n", node->cmd->id);
+  node->cmd.depend_id[0] = -2; // command is done
+  printf("finished command %i\n", node->cmd.id);
   pthread_mutex_unlock(&node->thread->mutex);
   return NULL;
 }
@@ -637,8 +638,6 @@ void do_limited(cmd_stream_t cmds, int nThreads)
 
   cmd_node_t cmd;
   bool keep_going;
-  thread_t* thread_p;
-  node_t node;
 
   do {
     keep_going = false;
@@ -649,6 +648,10 @@ void do_limited(cmd_stream_t cmds, int nThreads)
       printf("checking command %i\n", cmd->id);
       status_t status = get_status(cmd);
       print_status(status);
+
+      node_t* node = checked_malloc(sizeof(node_t));
+      thread_t* thread_p;
+
       switch (status)
       {
         case WAITING:
@@ -656,11 +659,11 @@ void do_limited(cmd_stream_t cmds, int nThreads)
           break;
         case RUNNABLE:
           thread_p = get_thread(threads);
-          node.cmd = cmd;
-          node.thread = thread_p;
+          node->cmd = *cmd;
+          node->thread = thread_p;
         // run the task
           printf("calling pthread_create() ... \n");
-          pthread_create(&thread_p->thread, NULL, &run_limited, &node);
+          pthread_create(&thread_p->thread, NULL, &run_limited, node);
           break;
         case DONE:
         default:
@@ -696,7 +699,7 @@ exe_stream (command_stream_t stream, int time_travel, int nThreads)
   else
   {
     cmd_stream_t cmds = initialize_cmds(stream);
-    global_stream = cmds;
+    HEAD = cmds->head;
     input_dependencies (cmds);
     
     if (nThreads == -1)
