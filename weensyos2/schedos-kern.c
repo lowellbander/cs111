@@ -162,9 +162,10 @@ interrupt(registers_t *reg)
 		else
 			run(current+1);
 
-	case INT_SYS_USER2:
-		/* Your code here (if you want). */
-		run(current);
+	case INT_SYS_PRINT:
+		// Prints character to console (will not be interrupted)
+		*cursorpos++ = reg->reg_eax;
+		schedule();
 
 	case INT_CLOCK:
 		// A clock interrupt occurred (so an application exhausted its

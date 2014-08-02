@@ -30,7 +30,8 @@ start(void)
 	sys_set_priority(PRIORITY);
 	for (i = 0; i < RUNCOUNT; i++) {
 		// Write characters to the console, yielding after each one.
-		*cursorpos++ = PRINTCHAR;
+		sys_print(PRINTCHAR);
+		//*cursorpos++ = PRINTCHAR;
 		sys_yield();
 	}
 	

@@ -12,7 +12,7 @@ The name of the scheduling algorithm is: Round Robin
 
 
 (Exercise 2 is a coding exercise)
-
+schedos-kern.c: Implemented scheduling_algorithm 1 in schedule()
 
 Response to Exercise 3:
 
@@ -55,7 +55,7 @@ To alternate between different processes with the same priority, there is a
 counter to keep track of the number of times each process has run.
 
 schedos-1.c:
-Added a call to sys_set_priority.
+Added a call to sys_set_priority
 
 schedos-*.c:
 Added PRIORITY definitions
@@ -85,7 +85,21 @@ print, indicating that it was interuppted.
 
 
 (Exercise 6 is a coding exercise)
+Implemented using new system call (sys_print, INT_SYS_PRINT)
 
+schedos-1.c:
+Added a call to sys_print
+
+
+schedos-app.h:
+Implemented sys_print
+
+schedos.h:
+Changed name of INT_SYS_USER2 to INT_SYS_PRINT
+
+schedos-kern.c:
+Added case in interrupt() for INT_SYS_PRINT (essentially the same code that was originally in schedos-1.c, just moved into a system call so as to not be
+interuppted)
 
 Anything else you'd like us to know:
 

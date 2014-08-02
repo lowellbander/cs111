@@ -76,4 +76,20 @@ sys_set_priority(int priority)
 		     						"a" (priority)
 		     				: "cc", "memory");
 }
+
+/*****************************************************************************
+ * sys_print
+ *
+ *   Prints the character atomically to console
+ *
+ *****************************************************************************/
+
+static inline void
+sys_print(uint16_t c)
+{
+	asm volatile("int %0\n"
+		     				: : "i" (INT_SYS_PRINT),
+		     						"a" (c)
+		     				: "cc", "memory");
+}
 #endif
