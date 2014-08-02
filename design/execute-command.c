@@ -572,8 +572,10 @@ void* run_limited(void* context)
   node_t* node = context;
   printf("in run_limited()\n");
   execute_command(node->cmd->self);
-  pthread_mutex_unlock(&node->thread->mutex);
+  // update other tasks dependency list
   
+
+  pthread_mutex_unlock(&node->thread->mutex);
   return NULL;
 }
 
@@ -594,22 +596,6 @@ thread_t* get_thread(thread_t* threads)
       i = 0;
   }
   return NULL;
-
-  /*pthread_mutex_t mutex = mutexes[0];
-  int retval = pthread_mutex_trylock(&mutex);
-  if (retval == 0)
-    printf("success\n");
-  retval = pthread_mutex_trylock(&mutex);
-  if (retval == 0)
-    printf("success\n");
-  else if (retval == EBUSY)
-    printf("BUSY\n");
-  else
-    printf("failed: %i\n", retval);
-  retval = pthread_mutex_unlock(&mutex);
-  retval = pthread_mutex_trylock(&mutex);
-  if (retval == 0)
-    printf("success\n");*/
 }
 
 void do_limited(cmd_stream_t cmds, int nThreads)
@@ -618,8 +604,6 @@ void do_limited(cmd_stream_t cmds, int nThreads)
   int i;
   for (i = 0; i < nThreads; ++i)
     threads[i].used = false;
-  // do I need to initialize the mutexes?
-  // http://stackoverflow.com/questions/14320041/
 
   cmd_node_t cmd;
   bool keep_going;
@@ -644,7 +628,6 @@ void do_limited(cmd_stream_t cmds, int nThreads)
           node.thread = thread_p;
         // run the task
           pthread_create(&thread_p->thread, NULL, &run_limited, &node);
-        // update other tasks dependency list
           break;
         case DONE:
         default:
