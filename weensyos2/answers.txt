@@ -4,7 +4,7 @@ UCLA ID: 204 156 534
 Name: Nicole Yee
 UCLA ID: 403 796 037
 
--------------------------------------------------------------------------------
+----------------------------------------------------------------------------
 
 Response to Exercise 1:
 
@@ -13,6 +13,7 @@ The name of the scheduling algorithm is: Round Robin
 
 (Exercise 2 is a coding exercise)
 schedos-kern.c: Implemented scheduling_algorithm 1 in schedule()
+
 
 Response to Exercise 3:
 
@@ -43,6 +44,7 @@ schedos-2: 320
 schedos-3: 320 + 320 = 640
 schedos-4: 640 + 320 = 960
 Average = (0 + 320 + 640 + 960)/4 = 480 ms
+
 
 Exercise 4:
 
@@ -77,11 +79,10 @@ Implemented scheduling_algorithm 2
 
 Exercise 5:
 The first known timer interrupt occured during process 4. When a process is 
-interrupted, it is unable to print to the screen and 4 is the first one that 
+interrupted, it is unable to print to the screen and 4 is the first one that
 does not print during each cycle. The first four cycles function as normal
 (all processes print once), but during the fifth cycle, process 4 does not
 print, indicating that it was interuppted.
-
 
 
 (Exercise 6 is a coding exercise)
@@ -90,7 +91,6 @@ Implemented using new system call (sys_print, INT_SYS_PRINT)
 schedos-1.c:
 Added a call to sys_print
 
-
 schedos-app.h:
 Implemented sys_print
 
@@ -98,8 +98,25 @@ schedos.h:
 Changed name of INT_SYS_USER2 to INT_SYS_PRINT
 
 schedos-kern.c:
-Added case in interrupt() for INT_SYS_PRINT (essentially the same code that was originally in schedos-1.c, just moved into a system call so as to not be
+Added case in interrupt() for INT_SYS_PRINT (essentially the same code that 
+was originally in schedos-1.c, just moved into a system call so as to not be
 interuppted)
+
+
+Exercise 7:
+We implemented a lottery scheduling algorithm. A random number between 1 
+and 4 (inclusive) is chosen, and if the process with that pid is runnable, 
+it is run. If not, another random number is chosen as a pid until a runnable
+process is found. Our pseudo-random number generator was implemented using 
+a Linear Feedback Shift Register.
+
+
+Exercise 8: 
+If the MUTEX_SYNC symbol is #defined in schedos-1.c, instead of using a syscall
+to atomically print a character to the screen, the process spins until it
+acquires a lock which allows it to print to the screen, then releases the lock
+after it has printed to the screen. This lock is shared among all processes.
+
 
 Anything else you'd like us to know:
 

@@ -103,7 +103,7 @@ start(void)
 	cursorpos = (uint16_t *) 0xB8000;
 
 	// Initialize the scheduling algorithm.
-	scheduling_algorithm = 0;
+	scheduling_algorithm = 3;
 
 	// Switch to the first process
 	run(&proc_array[1]);
@@ -180,6 +180,16 @@ interrupt(registers_t *reg)
 	}
 }
 
+// a pseudo-random number generator 
+// implemented using a Linear Feedback Shift Register
+unsigned short lfsr = 0xACE1u;
+unsigned bit;
+
+unsigned rand()
+{
+  bit  = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5) ) & 1;
+  return lfsr =  (lfsr >> 1) | (bit << 15);
+}
 
 
 /*****************************************************************************
@@ -258,6 +268,18 @@ schedule(void)
  		proc_array[temp_pid].p_times_run++;
  		run(&proc_array[temp_pid]);
 	}
+
+  // Exercise 7:
+  // Lottery scheduling
+  else if (scheduling_algorithm == 3)
+  {
+    while (1)
+    {
+      pid = rand() % 4 + 1;
+			if (proc_array[pid].p_state == P_RUNNABLE)
+				run(&proc_array[pid]);
+    }
+  }
 
 	// If we get here, we are running an unknown scheduling algorithm.
 	cursorpos = console_printf(cursorpos, 0x100, "\nUnknown scheduling algorithm %d\n", scheduling_algorithm);

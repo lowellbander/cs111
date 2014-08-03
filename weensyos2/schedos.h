@@ -22,4 +22,7 @@
 
 extern uint16_t * volatile cursorpos;
 
+// mutex lock for synchronization
+
+extern uint32_t mutex;
 #endif

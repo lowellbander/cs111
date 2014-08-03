@@ -22,6 +22,10 @@
 #define PRIORITY 3
 #endif
 
+// comment/uncomment the following line to disable/enable 
+// an additional sync method
+#define MUTEX_SYNC
+
 void
 start(void)
 {
@@ -30,7 +34,22 @@ start(void)
 	sys_set_priority(PRIORITY);
 	for (i = 0; i < RUNCOUNT; i++) {
 		// Write characters to the console, yielding after each one.
+    
+    //primary sync method
+    #ifndef MUTEX_SYNC
 		sys_print(PRINTCHAR);
+    #endif
+
+    //alternate sync method
+    #ifdef MUTEX_SYNC
+    // spin until we get the lock
+    while (atomic_swap(&mutex, 1) != 0)
+      continue;
+
+    *cursorpos++ = PRINTCHAR;
+    atomic_swap(&mutex, 0);
+    #endif
+
 		//*cursorpos++ = PRINTCHAR;
 		sys_yield();
 	}
