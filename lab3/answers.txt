@@ -9,13 +9,13 @@
 # If you have any other information you'd like us to know, please add it at the end of the file.
 
 # Partner 1
-Name: 
-Student ID: 
-Email: 
+Name: Nicole Yee
+Student ID: 403 796 037
+Email: tinyen888@gmail.com
 
 # Partner 2 (if you're working in a team)
-Name: 
-Student ID: 
-Email: 
+Name: Lowell Bander
+Student ID: 204 156 534
+Email: lowellbander@gmail.com
 
 # Add any other information you'd like us to know below this line.
