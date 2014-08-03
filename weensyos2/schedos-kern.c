@@ -205,6 +205,11 @@ unsigned rand()
  *
  *****************************************************************************/
 
+#define PROB1 25
+#define PROB2 25
+#define PROB3 25
+#define PROB4 25
+
 void
 schedule(void)
 {
@@ -254,7 +259,7 @@ schedule(void)
 					if (temp_pid == -1 ||
 							proc_array[i].p_priority < proc_array[temp_pid].p_priority ||
 							(proc_array[temp_pid].p_priority == proc_array[i].p_priority &&
-					       proc_array[i].p_times_run <= proc_array[temp_pid].p_times_run))
+					      proc_array[i].p_times_run <= proc_array[temp_pid].p_times_run))
 						temp_pid = i;
 				}
 				// Never found a RUNNABLE process after going through all of them
@@ -269,20 +274,43 @@ schedule(void)
  		run(&proc_array[temp_pid]);
 	}
 
+
   // Exercise 7:
   // Lottery scheduling
   else if (scheduling_algorithm == 3)
   {
+    int tickets[100];
+    int i;
+    int sum = PROB1 + PROB2 + PROB3 + PROB4;
+    if (sum != 100)
+    {
+	    cursorpos = console_printf(cursorpos, 0x100, 
+            "\n Probabilities must sum to 100, not %d\n", sum);
+      return;
+    }
+    //initialize tickets
+    for (i = 0; i < PROB1; ++i)
+      tickets[i] = 1;
+    for (     ; i < PROB1 + PROB2; ++i)
+      tickets[i] = 2;
+    for (     ; i < PROB1 + PROB2 + PROB3; ++i)
+      tickets[i] = 3;
+    for (     ; i < sum; ++i)
+      tickets[i] = 4;
+
+    int index;
     while (1)
     {
-      pid = rand() % 4 + 1;
+      index = rand() % sum; // 0 < index < 99
+      pid = tickets[index];
 			if (proc_array[pid].p_state == P_RUNNABLE)
 				run(&proc_array[pid]);
     }
   }
 
 	// If we get here, we are running an unknown scheduling algorithm.
-	cursorpos = console_printf(cursorpos, 0x100, "\nUnknown scheduling algorithm %d\n", scheduling_algorithm);
+	cursorpos = console_printf(cursorpos, 0x100, 
+              "\nUnknown scheduling algorithm %d\n", scheduling_algorithm);
 	while (1)
 		/* do nothing */;
 }
