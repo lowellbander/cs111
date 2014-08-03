@@ -1,0 +1,9 @@
+Lowell Bander, UID 204 156 534
+Nicole Yee, UID 403 796 037
+
+We did parallel/parrot programming when possible. 
+Because we vastly different schedules, one of us would work on the code and push
+to gitHub while the other person would be sleeping. 
+We would pick up where the other left off, either debugging or begin adding the 
+next feature. Almost all of the sections of code were either co-written 
+or debugged by both of us.

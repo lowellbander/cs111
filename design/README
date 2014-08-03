@@ -1,15 +1,23 @@
 Lowell Bander, UID 204 156 534
 Nicole Yee, UID 403 796 037
 
-We did parallel/parrot programming when possible. 
-Because we vastly different schedules, one of us would work on the code and push
-to gitHub while the other person would be sleeping. 
-We would pick up where the other left off, either debugging or begin adding the 
-next feature. Almost all of the sections of code were either co-written 
-or debugged by both of us.
+For our design project, we improved upon lab 1c by allowing the user to limit
+the amount of parallelism to at most N subprocesses, where N is a parameter that
+can be set by an argument to the shell. The new usage is as follows:
 
-Currently our program passes all of the test cases with make check. Execution
-can be run in parallel or in sequence.
+usage: ./timetrash [-pt] SCRIPT-FILE [N-THREADS]
 
-Uncommenting line 449 of execute_command.c dramatizes the discrepancy in
-completion times between commands.
+A simple script that might be tested might look something like:
+
+echo chimichanga      ; echo finished 1
+echo alpha > a.txt    ; echo finished 2 
+echo pseudo > a.txt   ; echo finished 3
+echo beta > b.txt     ; echo finished 4
+echo rho              ; echo finished 5
+echo gamma > a.txt    ; echo finished 6
+echo epsilon > b.txt  ; echo finished 7
+echo chi              ; echo finished 8
+echo omega > c.txt    ; echo finished 9
+
+
+SEE collaboration.txt FOR A DESCRIPTION OF OUR COLLABORATIVE PROCESS.
