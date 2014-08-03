@@ -110,6 +110,9 @@ it is run. If not, another random number is chosen as a pid until a runnable
 process is found. Our pseudo-random number generator was implemented using 
 a Linear Feedback Shift Register.
 
+Our implementation is such that tickets are drawn with replacement, and each
+process has the same number of tickets.
+
 
 Exercise 8: 
 If the MUTEX_SYNC symbol is #defined in schedos-1.c, instead of using a syscall
