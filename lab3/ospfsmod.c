@@ -482,7 +482,7 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 
 		/* EXERCISE: Your code here */
 		// Get the pointer to inode data (directory entry)
-		od = ospfs_inode_data(dir_oi->oi, offset);
+		od = ospfs_inode_data(dir_oi, offset);
 		
 		// Ignore blank directory entries
 		if (!od->od_ino)
@@ -503,7 +503,7 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 					type = DT_DIR;
 					break;
 				case OSPFS_FTYPE_SYMLINK:
-					type = DT_LINK;
+					type = DT_LNK;
 					break;
 				// Gets rid of compiler warning
 				default:
@@ -919,12 +919,12 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
   
   // TODO: should this be > instead?
   // You can't read past the end of the file.
-  if (*f_pos >= oi->or_size)
+  if (*f_pos >= oi->oi_size)
     return -EFAULT;
 
   // You can only read until the end of the file.
   if (*f_pos + count >= oi->oi_size)
-    count = oi->oi_size - f_pos;
+    count = oi->oi_size - *f_pos;
 
 	// Copy the data to user block by block
 	while (amount < count && retval >= 0) {
@@ -933,10 +933,8 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		char *data;
 
 		// ospfs_inode_blockno returns 0 on error
-		if (blockno == 0) {
-			retval = -EIO;
-			goto done;
-		}
+		if (!blockno)
+			return -EIO;
 
 		data = ospfs_block(blockno);
 
@@ -954,7 +952,7 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		data += offset_within_block;
 
     // only read until the end of this block, maybe less
-		if (*fpos + count > block_end)
+		if (*f_pos + count > block_end)
 			n = block_end - offset_within_block;
 		else
 			n = offset_within_block + count - amount;
