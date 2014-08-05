@@ -503,7 +503,7 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 					type = DT_DIR;
 					break;
 				case OSPFS_FTYPE_SYMLINK:
-					type = DT_LNK;
+					type = DT_LK;
 					break;
 				// Gets rid of compiler warning
 				default:
@@ -759,6 +759,11 @@ add_block(ospfs_inode_t *oi)
 	uint32_t *allocated[2] = { 0, 0 };
 
 	/* EXERCISE: Your code here */
+  
+  //  Error if the max number of blocks have alreayd been allocated
+  if (n == OSPFS_MAXFILEBLKS) return -ENOSPC;
+
+
 	return -EIO; // Replace this line
 }
 
