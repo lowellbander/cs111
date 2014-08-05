@@ -875,6 +875,12 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		// into user space.
 		// Use variable 'n' to track number of bytes moved.
 		/* EXERCISE: Your code here */
+
+    uint32_t block_start = blockno * OSPFS_BLKSIZE;
+    uint32_t block_end = block_start + OSPFS_BLKSIZE - 1;
+    uint32_t offset_within_block = f_pos - block_start;
+
+
 		retval = -EIO; // Replace these lines
 		goto done;
 
