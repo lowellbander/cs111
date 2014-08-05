@@ -877,20 +877,26 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		/* EXERCISE: Your code here */
 
     uint32_t block_start = blockno * OSPFS_BLKSIZE;
-    uint32_t block_end = block_start + OSPFS_BLKSIZE - 1;
-    uint32_t offset_within_block = f_pos - block_start;
-
-
-		retval = -EIO; // Replace these lines
-		goto done;
+    uint32_t block_end = block_start + OSPFS_BLKSIZE;
+    uint32_t offset_within_block = f_pos - block_start; 
+		
+		data += offset_within_block;
+		
+		if (*fpos + count > block_end)
+			n = block_end - offset_within_block;
+		else
+			n = offset_within_block + count - amount;
+		
+		// Try to copy from data to buffer
+		if (copy_to_user(buffer, data, n))
+			return -EFAULT;
 
 		buffer += n;
 		amount += n;
 		*f_pos += n;
 	}
-
-    done:
-	return (retval >= 0 ? amount : retval);
+	
+	return amount;
 }
 
 
