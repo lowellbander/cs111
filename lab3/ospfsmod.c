@@ -846,6 +846,16 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 	// Change 'count' so we never read past the end of the file.
 	/* EXERCISE: Your code here */
 
+  
+  // TODO: should this be > instead?
+  // You can't read past the end of the file.
+  if (*f_pos >= oi->or_size)
+    return -EFAULT;
+
+  // You can only read until the end of the file.
+  if (*f_pos + count >= oi->oi_size)
+    count = oi->oi_size - f_pos;
+
 	// Copy the data to user block by block
 	while (amount < count && retval >= 0) {
 		uint32_t blockno = ospfs_inode_blockno(oi, *f_pos);
