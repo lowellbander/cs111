@@ -714,8 +714,8 @@ indir_index(uint32_t b)
 }
 
 
-// int32_t indir_index(uint32_t b)
-//	Returns the indirect block index for file block b.
+// int32_t dir_index(uint32_t b)
+//	Returns the direct or indirect block index for file block b.
 //
 // Inputs:  b -- the zero-based index of the file block
 // Returns: the index of block b in the relevant indirect block or the direct
@@ -727,7 +727,12 @@ static int32_t
 direct_index(uint32_t b)
 {
 	// Your code here.
-	return -1;
+	// b is one of file's direct blcoks
+	if (b < OSPFS_NDIRECT)
+		return b;
+	else
+	// b is in indirect block, find index
+		return (b - OSPFS_NDIRECT) % OSPFS_NINDIRECT;
 }
 
 
