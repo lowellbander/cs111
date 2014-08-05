@@ -727,7 +727,7 @@ static int32_t
 direct_index(uint32_t b)
 {
 	// Your code here.
-	// b is one of file's direct blcoks
+	// b is one of file's direct blocks
 	if (b < OSPFS_NDIRECT)
 		return b;
 	else
