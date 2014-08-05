@@ -482,7 +482,7 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 
 		/* EXERCISE: Your code here */
 		// Get the pointer to inode data (directory entry)
-		od = ospfs_inode_data(dir_oi->oi, offset);
+		od = ospfs_inode_data(dir_oi, offset);
 		
 		// Ignore blank directory entries
 		if (!od->od_ino)
@@ -503,7 +503,7 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 					type = DT_DIR;
 					break;
 				case OSPFS_FTYPE_SYMLINK:
-					type = DT_LINK;
+					type = DT_LNK;
 					break;
 				// Gets rid of compiler warning
 				default:
@@ -678,7 +678,11 @@ static int32_t
 indir2_index(uint32_t b)
 {
 	// Your code here.
-	return -1;
+	// Index is still within the direct and indirect blocks
+	if (b < OSPFS_NDIRECT + OSPFS_NINDIRECT)
+		return -1;
+	else
+		return 0;
 }
 
 
@@ -697,7 +701,16 @@ static int32_t
 indir_index(uint32_t b)
 {
 	// Your code here.
-	return -1;
+	uint32_t indirect2_beg = OSPFS_NDIRECT + OSPFS_NINDIRECT;
+	// b is one of file's direct blocks
+	if (b < OSPFS_NDIRECT)
+		return -1;
+	// b is under file's first indirect block
+	else if (b < indirect2_beg)
+		return 0;
+	// b is in doubly indirect block, find offset
+	else
+		return (b-indirect2_beg)/OSPFS_NINDIRECT;
 }
 
 
@@ -919,12 +932,12 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
   
   // TODO: should this be > instead?
   // You can't read past the end of the file.
-  if (*f_pos >= oi->or_size)
+  if (*f_pos >= oi->oi_size)
     return -EFAULT;
 
   // You can only read until the end of the file.
   if (*f_pos + count >= oi->oi_size)
-    count = oi->oi_size - f_pos;
+    count = oi->oi_size - *f_pos;
 
 	// Copy the data to user block by block
 	while (amount < count && retval >= 0) {
@@ -954,7 +967,7 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		data += offset_within_block;
 
     // only read until the end of this block, maybe less
-		if (*fpos + count > block_end)
+		if (*f_pos + count > block_end)
 			n = block_end - offset_within_block;
 		else
 			n = offset_within_block + count - amount;
@@ -968,8 +981,8 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		*f_pos += n;
 	}
 
-	//  "Returns number of chars read on success"
-	return amount;
+	done:
+		return (retval >= 0 ? amount : retval);
 }
 
 
