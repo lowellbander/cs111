@@ -594,6 +594,25 @@ static uint32_t
 allocate_block(void)
 {
 	/* EXERCISE: Your code here */
+	// Get the beginning of the free bit map block
+	void *map = ospfs_block(OSPFS_FREEMAP_BLK);
+	
+	int i;
+	// Start at the free bit map block
+	// Iterate through to find a free bit
+	for (i = OSPFS_FREEMAP_BLK; i != ospfs_super->os_nblocks; ++i)
+	{
+		// If block is free
+		if (bitviector_test(map, i))
+		{
+			// Set the block to allocated
+			bitvector_clear(map, i);
+			// Return the block number
+			return i;
+		}
+	}
+	
+	// Disk is full
 	return 0;
 }
 
@@ -613,6 +632,16 @@ static void
 free_block(uint32_t blockno)
 {
 	/* EXERCISE: Your code here */
+	// Check that this block is allowed to be freed
+	uint32_t first_data_block = ospfs_super->os_firstinob + 
+	                  ospfs_size2nblocks(ospfs_super->os_ninodes*OSPFS_INODESIZE);
+	if (blockno > first_data_block && blockno < ospfs_super->os_nblocks)
+	{
+		// Get the beginning of the free bit map block
+		void *map = ospfs_block(OSPFS_FREEMAP_BLK);
+	
+		bitvector_set(map, blockno);
+	}
 }
 
 
