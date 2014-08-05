@@ -946,10 +946,8 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		char *data;
 
 		// ospfs_inode_blockno returns 0 on error
-		if (blockno == 0) {
-			retval = -EIO;
-			goto done;
-		}
+		if (!blockno)
+			return -EIO;
 
 		data = ospfs_block(blockno);
 
