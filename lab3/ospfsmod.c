@@ -844,7 +844,7 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 
 	// Make sure we don't read past the end of the file!
 	// Change 'count' so we never read past the end of the file.
-	/* EXERCISE: Your code here */
+	/* EXERCISE */
 
   
   // TODO: should this be > instead?
@@ -874,14 +874,16 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		// Copy data into user space. Return -EFAULT if unable to write
 		// into user space.
 		// Use variable 'n' to track number of bytes moved.
-		/* EXERCISE: Your code here */
+		/* EXERCISE */
 
     uint32_t block_start = blockno * OSPFS_BLKSIZE;
     uint32_t block_end = block_start + OSPFS_BLKSIZE;
     uint32_t offset_within_block = f_pos - block_start; 
 		
+    //  point to what position within the block we should start reading
 		data += offset_within_block;
-		
+
+    // only read until the end of this block, maybe less
 		if (*fpos + count > block_end)
 			n = block_end - offset_within_block;
 		else
@@ -895,7 +897,8 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		amount += n;
 		*f_pos += n;
 	}
-	
+
+	//  "Returns number of chars read on success"
 	return amount;
 }
 
