@@ -503,7 +503,7 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 					type = DT_DIR;
 					break;
 				case OSPFS_FTYPE_SYMLINK:
-					type = DT_LK;
+					type = DT_LNK;
 					break;
 				// Gets rid of compiler warning
 				default:
