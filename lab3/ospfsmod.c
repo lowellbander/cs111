@@ -678,7 +678,11 @@ static int32_t
 indir2_index(uint32_t b)
 {
 	// Your code here.
-	return -1;
+	// Index is still within the direct and indirect blocks
+	if (b < OSPFS_NDIRECT + OSPFS_NINDIRECT)
+		return -1;
+	else
+		return 0;
 }
 
 
@@ -697,12 +701,21 @@ static int32_t
 indir_index(uint32_t b)
 {
 	// Your code here.
-	return -1;
+	uint32_t indirect2_beg = OSPFS_NDIRECT + OSPFS_NINDIRECT;
+	// b is one of file's direct blocks
+	if (b < OSPFS_NDIRECT)
+		return -1;
+	// b is under file's first indirect block
+	else if (b < indirect2_beg)
+		return 0;
+	// b is in doubly indirect block, find offset
+	else
+		return (b-indirect2_beg)/OSPFS_NINDIRECT;
 }
 
 
-// int32_t indir_index(uint32_t b)
-//	Returns the indirect block index for file block b.
+// int32_t dir_index(uint32_t b)
+//	Returns the direct or indirect block index for file block b.
 //
 // Inputs:  b -- the zero-based index of the file block
 // Returns: the index of block b in the relevant indirect block or the direct
@@ -714,7 +727,12 @@ static int32_t
 direct_index(uint32_t b)
 {
 	// Your code here.
-	return -1;
+	// b is one of file's direct blcoks
+	if (b < OSPFS_NDIRECT)
+		return b;
+	else
+	// b is in indirect block, find index
+		return (b - OSPFS_NDIRECT) % OSPFS_NINDIRECT;
 }
 
 
@@ -971,8 +989,8 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		*f_pos += n;
 	}
 
-	//  "Returns number of chars read on success"
-	return amount;
+	done:
+		return (retval >= 0 ? amount : retval);
 }
 
 
