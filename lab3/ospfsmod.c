@@ -859,20 +859,20 @@ add_block(ospfs_inode_t *oi)
       
       //allocate the indirect block if you have to 
       if (!indirect2_data[indirect2_index])
+      {
         if (!(allocated[INDIRECT] = allocate_block()))
           goto nospace;
+      
+        // update the block number of the inode's indirect block
+        oi->oi_indirect = allocated[INDIRECT];
+        // zero the new indirect2 block
+				memset(ospfs_block(oi->oi_indirect), 0, OSPFS_BLKSIZE);
+      }
           
-      // get the number of the inode's indirect block
-      indirect_block = (!allocated[INDIRECT]) ? indirect2_data[indirect2_index] :
-                                                        allocated[INDIRECT];
 			// set the appropriate entry in the inode's indirect2 block
       // to the block number of the newly allocated data block
-      indirect_data = ospfs_block(indirect_block);
+      indirect_data = ospfs_block(oi->oi_indirect);
 			indirect2_data[indirect2_index] = indirect_data[indirect_index];
-			
-			// zero the new indirect block
-			if (allocated[INDIRECT])
-				memset(ospfs_block(indirect_block), 0, OSPFS_BLKSIZE);
 			
       // try to allocate a data block
       if (!(data_block = allocate_block())) goto nospace;
