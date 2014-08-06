@@ -775,6 +775,8 @@ add_block(ospfs_inode_t *oi)
 
 	// keep track of allocations to free in case of -ENOSPC
 	uint32_t *allocated[2] = { 0, 0 };
+  const int INDIRECT   = 0;
+  const int INDIRECT_2 = 1;
 
 	/* EXERCISE: Your code here */
  
@@ -783,6 +785,12 @@ add_block(ospfs_inode_t *oi)
 	
 	int32_t indirect_index = indir_index(n);
 	int32_t direct_index;
+
+  uint32_t indirect_block;
+	uint32_t data_block; /* block number of allocated data block */
+
+  uint32_t* indirect_data; // initialize to NULL?
+
 	switch (indirect_index)
 	{
 		// Direct
@@ -792,16 +800,38 @@ add_block(ospfs_inode_t *oi)
 			if (oi->oi_direct[direct_index] != 0) return -EIO;
 			
 			// Try to allocate block
-			uint32_t block_num; /* block number of allocated block */
-			if ((block_num = allocate_block()) == 0) return -ENOSPC;
+			if (!(data_block = allocate_block())) return -ENOSPC;
 			
-			memset(ospfs_block(block_num), 0, OSPFS_BLKSIZE);
-			oi->oi_direct[direct_index] = block_num;
+			memset(ospfs_block(data_block), 0, OSPFS_BLKSIZE);
+			oi->oi_direct[direct_index] = data_block;
 			oi->oi_size = (n + 1) * OSPFS_BLKSIZE;
 			return 0;
 		// Indirect
 		case 0:
-		
+		  //allocate the indirect block if you have to 
+      if (!oi->oi_indirect)
+        if (!(allocated[INDIRECT] = allocate_block()))
+          goto nospace;
+    
+      // get the number of the inode's indirect block
+      indirect_block = (!allocated[INDIRECT]) ? oi->oi_indirect :
+                                                        allocated[INDIRECT];
+
+      // try to allocate a data block
+      if (!(data_block = allocate_block())) goto nospace;
+
+      // clear the data block
+			memset(ospfs_block(data_block), 0, OSPFS_BLKSIZE);
+
+      // set the appropriate entry in the inode's indirect block
+      // to the block number of the newly allocated data block
+      oi->oi_indirect[indirect_index] = data_block;
+
+      // update the size of the file
+			oi->oi_size = (n + 1) * OSPFS_BLKSIZE;
+
+      // return successfully
+      return 0;
 			break;
 		// Doubly indirect
 		default:
@@ -809,7 +839,12 @@ add_block(ospfs_inode_t *oi)
 			break;
 	}
 	
-	return -EIO; // Replace this line
+
+	nospace:
+  // deallocate everything you allocated
+  //TODO: implement this
+
+  return -ENOSPC;
 }
 
 
