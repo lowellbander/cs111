@@ -958,8 +958,8 @@ remove_block(ospfs_inode_t *oi)
 		case -1:
 			direct_index = dir_index(n);
 			// Set freed block pointer to 0
-			oi->oi_direct[direct_index] = 0;
 			free_block(oi->oi_direct[direct_index]);
+			oi->oi_direct[direct_index] = 0;
 			// Update oi_size to max file size that could fit in oi's blocks
 			oi->oi_size = n * OSPFS_BLKSIZE;
 			return 0;
