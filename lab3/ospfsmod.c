@@ -1273,7 +1273,24 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 			retval = change_size(oi, new_size);
 			if (retval < 0) return retval; 
 		}
+///////////////////////////////////////////////////////////////////////
+		uint32_t block_start = blockno * OSPFS_BLKSIZE;
+    uint32_t block_end = block_start + OSPFS_BLKSIZE;
+    uint32_t offset_within_block = *f_pos - block_start; 
+		
+    //  point to what position within the block we should start reading
+		data += offset_within_block;
 
+    // only read until the end of this block, maybe less
+		if (*f_pos + count > block_end)
+			n = block_end - offset_within_block;
+		else
+			n = offset_within_block + count - amount;
+		
+		// Try to copy from data to buffer
+		if (copy_to_user(buffer, data, n))
+			return -EFAULT;
+/////////////////////////////////////////////////
 		buffer += n;
 		amount += n;
 		*f_pos += n;
