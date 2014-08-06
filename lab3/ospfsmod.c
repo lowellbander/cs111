@@ -777,11 +777,26 @@ add_block(ospfs_inode_t *oi)
 	uint32_t *allocated[2] = { 0, 0 };
 
 	/* EXERCISE: Your code here */
-  
+ 
   //  Error if the max number of blocks have alreayd been allocated
   if (n == OSPFS_MAXFILEBLKS) return -ENOSPC;
 
-
+	switch (indir_index(n))
+	{
+		// Direct
+		case -1:
+			
+			break;
+		// Indirect
+		case 0:
+		
+			break;
+		// Doubly indirect
+		default:
+		
+			break;
+	}
+	
 	return -EIO; // Replace this line
 }
 
