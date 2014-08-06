@@ -809,9 +809,7 @@ add_block(ospfs_inode_t *oi)
 			memset(ospfs_block(data_block), 0, OSPFS_BLKSIZE);
 			oi->oi_direct[direct_index] = data_block;
 
-      // update the size of the file
-      oi->oi_size += OSPFS_BLKSIZE;
-			return 0;
+      break;
 			
 		// Indirect
 		case 0:
@@ -841,11 +839,6 @@ add_block(ospfs_inode_t *oi)
       indirect_data = ospfs_block(indirect_block);
       indirect_data[indirect_index] = data_block;
 
-      // update the size of the file
-      oi->oi_size += OSPFS_BLKSIZE;
-
-      // return successfully
-      return 0;
 			break;
 			
 		// Doubly indirect
@@ -897,11 +890,15 @@ add_block(ospfs_inode_t *oi)
       // to the block number of the newly allocated data block
       indirect_data[indirect_index] = data_block;
 
-      // update the size of the file
-      oi->oi_size += OSPFS_BLKSIZE;
 			break;
 	}
 	
+  // update the size of the file
+  oi->oi_size += OSPFS_BLKSIZE;
+
+  // return successfully
+  return 0;
+
 
 	// Could not allocate block
 	// deallocate everything you allocated
