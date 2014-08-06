@@ -836,14 +836,20 @@ add_block(ospfs_inode_t *oi)
 			break;
 		// Doubly indirect
 		default:
-		
+
 			break;
 	}
 	
 
+	// Could not allocate block
+	// deallocate everything you allocated
 	nospace:
-  // deallocate everything you allocated
-  //TODO: implement this
+  // Free indirect block if allocated
+  if (allocated[INDIRECT])
+		free_block(allocated[INDIRECT]);
+	// Free doubly indirect block if allocated
+	if (allocated[INDIRECT_2])
+		free_block(allocated[INDIRECT_2]);
 
   return -ENOSPC;
 }
