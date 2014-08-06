@@ -975,8 +975,8 @@ remove_block(ospfs_inode_t *oi)
 			// Free unnecessary indirect block
 			if (indirect_index == 0)
 			{
-				oi->oi_indirect = 0;
 				free_block(oi->oi_indirect);
+				oi->oi_indirect = 0;
 			}
 			
 			// Update oi_size to max file size that could fit in oi's blocks
