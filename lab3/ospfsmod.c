@@ -848,20 +848,17 @@ add_block(ospfs_inode_t *oi)
       {
         if (!(allocated[INDIRECT_2] = allocate_block()))
           goto nospace;
-        else
-        	oi->oi_indirect2 = allocated[INDIRECT_2];
+        
+        oi->oi_indirect2 = allocated[INDIRECT_2];
+        // zero the new indirect2 block
+				memset(ospfs_block(oi->oi_indirect2), 0, OSPFS_BLKSIZE);
        }
         	
       // get the number of the inode's indirect2 block
       indirect2_block = (!allocated[INDIRECT_2]) ? oi->oi_indirect :
                                                         allocated[INDIRECT_2];
-      // zero the new indirect2 block
-      if (allocated[INDIRECT_2])
-				memset(ospfs_block(indirect2_block), 0, OSPFS_BLKSIZE);
-			
 			
       indirect2_data = ospfs_block(indirect2_block);
-      
       
       //allocate the indirect block if you have to 
       if (!indirect2_data[indirect2_index])
