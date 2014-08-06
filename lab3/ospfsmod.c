@@ -808,7 +808,9 @@ add_block(ospfs_inode_t *oi)
 			
 			memset(ospfs_block(data_block), 0, OSPFS_BLKSIZE);
 			oi->oi_direct[direct_index] = data_block;
-			oi->oi_size = (n + 1) * OSPFS_BLKSIZE;
+
+      // update the size of the file
+      oi->oi_size += OSPFS_BLKSIZE;
 			return 0;
 			
 		// Indirect
@@ -840,7 +842,7 @@ add_block(ospfs_inode_t *oi)
       indirect_data[indirect_index] = data_block;
 
       // update the size of the file
-			oi->oi_size = (n + 1) * OSPFS_BLKSIZE;
+      oi->oi_size += OSPFS_BLKSIZE;
 
       // return successfully
       return 0;
@@ -896,7 +898,7 @@ add_block(ospfs_inode_t *oi)
       indirect_data[indirect_index] = data_block;
 
       // update the size of the file
-			oi->oi_size = (n + 1) * OSPFS_BLKSIZE;
+      oi->oi_size += OSPFS_BLKSIZE;
 			break;
 	}
 	
