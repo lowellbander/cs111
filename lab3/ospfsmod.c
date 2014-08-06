@@ -780,13 +780,25 @@ add_block(ospfs_inode_t *oi)
  
   //  Error if the max number of blocks have alreayd been allocated
   if (n == OSPFS_MAXFILEBLKS) return -ENOSPC;
-
-	switch (indir_index(n))
+	
+	int32_t indir_dex = indir_index(n);
+	
+	switch (indir_dex)
 	{
 		// Direct
 		case -1:
+			int32_t dir_dex = direct_index(n);
+			// Block is already allocated
+			if (oi->oi_direct[dir_dex] != 0) return -EIO;
 			
-			break;
+			// Try to allocate block
+			uint32_t block_num; /* block number of allocated block */
+			if ((block_num = allocate_block()) == 0) return -ENOSPC;
+			
+			memset(ospfs_block(block_num), 0, OSPFS_BLKSIZE);
+			oi->oi_direct[dir_dex] = block_num;
+			oi->oi_size = (n + 1) * OSPFS_BLKSIZE;
+			return 0;
 		// Indirect
 		case 0:
 		
