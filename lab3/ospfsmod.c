@@ -960,9 +960,6 @@ remove_block(ospfs_inode_t *oi)
 			// Set freed block pointer to 0
 			free_block(oi->oi_direct[direct_index]);
 			oi->oi_direct[direct_index] = 0;
-			// Update oi_size to max file size that could fit in oi's blocks
-			oi->oi_size = n * OSPFS_BLKSIZE;
-			return 0;
 			break;
 		
 		// Indirect
@@ -979,9 +976,6 @@ remove_block(ospfs_inode_t *oi)
 				oi->oi_indirect = 0;
 			}
 			
-			// Update oi_size to max file size that could fit in oi's blocks
-			oi->oi_size = n * OSPFS_BLKSIZE;
-			return 0;
 			break;
 			
 		// Doubly Indirect
@@ -991,27 +985,28 @@ remove_block(ospfs_inode_t *oi)
 			// Access inside indirect
 			indirect_data = ospfs_block(indirect2_data[indirect2_index]);
 			// Set freed block pointer to 0
-			indirect_data[indirect_index] = 0;
 			free_block(indirect_data[indirect_index]);
+			indirect_data[indirect_index] = 0;
 			// Only data block in indirect, free indirect
 			if (indirect_index == 0)
 			{
 				// Set freed block pointer to 0
-				indirect2_data[indirect2_index] = 0;
 				free_block(indirect2_data[indirect2_index]);
+				indirect2_data[indirect2_index] = 0;
 			
 				// Recently free indirect only indirect left in doubly indirect
 				if (indirect2_index == 0)
 				{
-					oi->oi_indirect2 = 0;
 					free_block(oi->oi_indirect2);
+					oi->oi_indirect2 = 0;
 				}
 			}
-			// Update oi_size to max file size that could fit in oi's blocks
-			oi->oi_size = n * OSPFS_BLKSIZE;
-			return 0;
 			break;
 	}
+
+	// Update oi_size to max file size that could fit in oi's blocks
+	oi->oi_size = n * OSPFS_BLKSIZE;
+	return 0;
 	
 	return -EIO; // Replace this line
 }
