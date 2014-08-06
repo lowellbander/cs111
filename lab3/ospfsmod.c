@@ -825,7 +825,8 @@ add_block(ospfs_inode_t *oi)
 
       // set the appropriate entry in the inode's indirect block
       // to the block number of the newly allocated data block
-      oi->oi_indirect[indirect_index] = data_block;
+      indirect_data = ospfs_block(indirect_block);
+      indirect_data[indirect_index] = data_block;
 
       // update the size of the file
 			oi->oi_size = (n + 1) * OSPFS_BLKSIZE;
