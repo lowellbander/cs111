@@ -969,8 +969,8 @@ remove_block(ospfs_inode_t *oi)
 		case 0:
 			indirect_data = ospfs_block(oi->oi_indirect);
 			// Set freed block pointer to 0
-			indirect_data[indirect_index] = 0;
 			free_block(indirect_data[indirect_index]);
+			indirect_data[indirect_index] = 0;
 			
 			// Free unnecessary indirect block
 			if (indirect_index == 0)
