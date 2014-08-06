@@ -1273,8 +1273,13 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 		// read user space.
 		// Keep track of the number of bytes moved in 'n'.
 		/* EXERCISE: Your code here */
-		retval = -EIO; // Replace these lines
-		goto done;
+		size_t new_size = *f_pos + count;
+		// Writing past end of the file, change file's size
+		if (new_size > oi->oi_size)
+		{
+			retval = change_size(oi, new_size);
+			if (retval < 0) return retval; 
+		}
 
 		buffer += n;
 		amount += n;
