@@ -1467,7 +1467,12 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	uint32_t entry_ino = 0;
 	/* EXERCISE: Your code here. */
-	return -EINVAL; // Replace this line
+	
+	// Entry name is too large
+	if (dentry->d_name.len > OSPFS_MAXNAMELEN) return -ENAMETOOLONG;
+	// If file named the same as 'dentry' already exists in the given dir
+	if (find_direntry(dir_oi, dentry->d_name.name, dentry->d_name.len))
+		return -EEXIST;
 
 	/* Execute this code after your function has successfully created the
 	   file.  Set entry_ino to the created file's inode number before
