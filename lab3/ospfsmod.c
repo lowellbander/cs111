@@ -1373,7 +1373,28 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 	//    entries and return one of them.
 
 	/* EXERCISE: Your code here. */
-	return ERR_PTR(-EINVAL); // Replace this line
+	ospfs_direntry_t *od;
+	int i;
+	// Loop through each directory entry to find empty one
+	for (i = 0; i < dir_oi->oi_size; i += OSPFS_DIRENTRY_SIZE)
+	{	
+		// TODO: ?? do we need to zero od??
+		od = ospfs_inode_data(dir_oi, i);
+		// Found empty directory
+		if (od->od_ino == 0)
+			return od;
+	}
+	
+	// No empty entires, add entry block to directory
+	uint32_t new_size = dir_oi->oi_size + OSPFS_DIRENTRY_SIZE;
+	int change_return = change_size(dir_oi, new_size);
+	if (change_return < 0)
+		return ERR_PTR(change_return);
+	
+	// TODO: ?? zero od??
+	od = ospfs_inode_data(dir_oi, new_size);
+	return od;
+	
 }
 
 // ospfs_link(src_dentry, dir, dst_dentry
@@ -1593,6 +1614,6 @@ module_init(init_ospfs_fs)
 module_exit(exit_ospfs_fs)
 
 // Information about the module
-MODULE_AUTHOR("Skeletor");
+MODULE_AUTHOR("Lowell Bander and Nicole Yee");
 MODULE_DESCRIPTION("OSPFS");
 MODULE_LICENSE("GPL");
