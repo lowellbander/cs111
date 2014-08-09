@@ -758,14 +758,44 @@ int main(int argc, char *argv[])
 	listen_task = start_listen();
 	register_files(tracker_task, myalias);
 
+	
+	pid_t pid;
 	// First, download files named on command line.
 	for (; argc > 1; argc--, argv++)
+	{
 		if ((t = start_download(tracker_task, argv[1])))
-			task_download(t, tracker_task);
-
+		{
+			pid = fork();
+			// Unsuccessful creation of child process
+			if (pid < 0)
+			{
+				error("Error in forking process--downloading\n");
+			}
+			// Forking was successful, child downloads
+			else if (pid == 0)
+			{
+				task_download(t, tracker_task);
+				// Child should not continue for loop
+				exit(0);
+			}
+		}
+	}
 	// Then accept connections from other peers and upload files to them!
 	while ((t = task_listen(listen_task)))
-		task_upload(t);
-
+	{
+		pid = fork();
+		// Unsuccessful creation of child process
+		if (pid < 0)
+		{
+			error("Error in forking process--uploading\n");
+		}
+		// Forking was successful, child uploads
+		else if (pid == 0)
+		{
+			task_upload(t);
+			// Child should not continue for loop
+			exit(0);
+		}
+	}
 	return 0;
 }
