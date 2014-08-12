@@ -35,6 +35,18 @@ We chose to implement concurrency by forking processes.
 # EXERCISE 3: Describe the attacks you implemented for "evil mode".  Why
 #    are they attacks?  (~3-10 sentences each)
 
+Buffer Overflow Attack
+The first attack implemented is in task_download. We attempt to overflow their
+buffer by asking for an extra long filename (TASKBUFSIZE - 11) to account for 
+the spaces, "GET", and "OSP2P". If the peer only copies the string, without 
+checking for an overflow, they will encounter a segmentation fault.
+
+Upload data forever
+The second attack is implemented in task_upload. We attempt to send the peer
+endless amounts of useless data (using an infinite while loop). The peer
+may think that the data is from the valid file, allowing us to fill up their
+disk with "Muahahaha!"
+
 # Extra credit problems
 #Extra credit problem: none
 

