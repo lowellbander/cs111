@@ -36,6 +36,9 @@ replaced with calls to strncpy(), so that the number of characters copied could 
 limited to FILENAMESIZ. This way, the copied characters are guaranteed to fit within the 
 task struct.
 
+We also made sure that every call to strncpy() was followed by a line that null terminated
+the string, so that read operations stop when they're supposed to.
+
 # EXERCISE 2B: What other robustness problems did you fix?  (~1-3 sentences
 #    each)
 
