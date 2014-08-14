@@ -24,10 +24,17 @@ Email: lowellbander@gmail.com
 
 # EXERCISE 1: What method you used to make your peer download and upload
 #    files in parallel?  (~1-3 sentences)
+
 We chose to implement concurrency by forking processes.
 
 # EXERCISE 2A: What conditions did you find and fix that would have
 #    triggered a buffer overrun bug?  (~1-3 sentences each)
+
+There were two instances in which strcpy() was called to copy from one buffer to another. 
+This could have been used for a buffer overflow attack, so these two instances were
+replaced with calls to strncpy(), so that the number of characters copied could be 
+limited to FILENAMESIZ. This way, the copied characters are guaranteed to fit within the 
+task struct.
 
 # EXERCISE 2B: What other robustness problems did you fix?  (~1-3 sentences
 #    each)
