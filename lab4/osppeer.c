@@ -668,13 +668,24 @@ static void task_upload(task_t *t)
 	}
 	t->head = t->tail = 0;
 
-  // only let peers download from the current working directory
   char current_directory[PATH_MAX];
   char requested_directory[PATH_MAX];
 
   getcwd(current_directory, PATH_MAX);
   realpath(t->filename, requested_directory);
 
+  //check that paths are valid
+  if (current_directory == NULL)
+  {
+    error("* Current path invalid. Possibly length > PATH_MAX");
+    goto exit;
+  } else if (requested_directory == NULL)
+  {
+    error("* Invalid requested path.");
+    goto exit;
+  }
+
+  // only let peers download from the current working directory
   if (strcmp(current_directory, requested_directory))
   {
     error("* The peer can only serve files located in the current directory");
