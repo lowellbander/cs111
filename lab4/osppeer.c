@@ -668,6 +668,19 @@ static void task_upload(task_t *t)
 	}
 	t->head = t->tail = 0;
 
+  // only let peers download from the current working directory
+  char current_directory[PATH_MAX];
+  char requested_directory[PATH_MAX];
+
+  getcwd(current_directory, PATH_MAX);
+  realpath(t->filename, requested_directory);
+
+  if (strcmp(current_directory, requested_directory))
+  {
+    error("* The peer can only serve files located in the current directory");
+    goto exit;
+  }
+
 	// Evil Mode: send them a bunch of useless junk, forever
 	if (evil_mode)
 	{

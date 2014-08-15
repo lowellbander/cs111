@@ -44,6 +44,9 @@ the string, so that read operations stop when they're supposed to.
 
 Made TASKBUFSIZ way larger so that we can accomodate many, many peers.
 
+Added some code to task_upload() to check that the requested directory is the current
+directory.
+
 # EXERCISE 3: Describe the attacks you implemented for "evil mode".  Why
 #    are they attacks?  (~3-10 sentences each)
 
